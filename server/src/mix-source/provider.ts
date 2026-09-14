@@ -8,10 +8,11 @@ export interface MixSource {
 export class QueuePoolMixSource implements MixSource {
   id: string;
   name: string;
-  queues: Queue[] = [];
+  queues: Queue[];
 
-  constructor(id: string, name: string) {
+  constructor(id: string, name: string, queues: Queue[] = []) {
     this.id = id;
     this.name = name;
+    this.queues = queues;
   }
 }
