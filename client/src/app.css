@@ -161,6 +161,39 @@
   }
 }
 
+.action-menu {
+  position: relative;
+  display: inline-block;
+
+  .action-menu-list {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;
+    margin-top: 4px;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--accent-bg);
+    box-shadow: var(--shadow);
+  }
+
+  .action-menu-item {
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+
+    &:hover {
+      background: var(--accent-border);
+    }
+  }
+}
+
 .ticks {
   position: relative;
   width: 100%;
