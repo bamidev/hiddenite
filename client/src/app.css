@@ -194,6 +194,27 @@
   }
 }
 
+.close-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  line-height: 1;
+  font-size: 16px;
+
+  &:hover {
+    background: var(--accent-border);
+  }
+}
+
 .ticks {
   position: relative;
   width: 100%;
