@@ -1,23 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Api from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import './app.css'
 import AddButton from './components/common/add-button.tsx'
+import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 
 
 const api = new Api('http://localhost:3000')
 
 
 function App() {
-  const [sources, setSources] = useState([]);
+  const [sources, setSources] = useState<MixSourceData[]>([]);
 
-  function addSource() {
-    setSources(s => [...s, { id: crypto.randomUUID() }])
-  }
+  useEffect(() => {
+    async function loadSources() {
+      const response = await api.get('mix-source')
+      setSources(await response.json())
+    }
+    loadSources()
+  }, [])
 
   async function onAddMixSource() {
-    await api.put('mix-source')
-    addSource()
+    const response = await api.put('mix-source')
+    const source: MixSourceData = await response.json()
+    setSources(s => [...s, source])
   }
 
   return (
@@ -28,17 +34,13 @@ function App() {
           <div className='mix-bar'>
             <AddButton onClick={onAddMixSource} />
           </div>
-          {sources.map(i => (
-            <MixSource name={i} />
+          {sources.map(source => (
+            <MixSource key={source.id} source={source} />
           ))}
         </div>
       </section>
     </>
   )
-}
-
-function MixActionsButton() {
-  return 
 }
 
 export default App

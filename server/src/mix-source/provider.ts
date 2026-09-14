@@ -1,13 +1,4 @@
-/*class SongId {
-	source: String
-	identifier: String
+export interface MixSource {
+  id: string;
+  name: string;
 }
-
-class QueueItem {
-	player: String
-	song: SongId
-}
-
-export class QueueService {
-	items: QueueItem
-}*/

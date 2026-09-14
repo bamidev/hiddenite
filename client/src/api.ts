@@ -2,14 +2,13 @@
  * Whenever an API call failed.
  */
 class ApiCallError extends Error {
-  response: Response
+  response: Response;
 
   constructor(response: Response) {
-    super(`Got response status: ${response.status} ${response.statusText}`)
-    this.response = response
+    super(`Got response status: ${response.status} ${response.statusText}`);
+    this.response = response;
   }
 }
-
 
 export default class Api {
   baseUrl: string;
@@ -30,9 +29,9 @@ export default class Api {
     });
     // Raise an exception if the response status indicates failure
     if (!response.ok) {
-      throw new ApiCallError(response)
+      throw new ApiCallError(response);
     }
-    return response
+    return response;
   }
 
   /**

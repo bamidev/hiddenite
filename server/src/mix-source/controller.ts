@@ -1,4 +1,5 @@
-import { Controller, Put } from '@nestjs/common';
+import { Controller, Get, Put } from '@nestjs/common';
+import type { MixSource } from './provider';
 import { MixSourceService } from './service';
 
 @Controller('mix-source')
@@ -7,8 +8,13 @@ export class MixSourceController {
     this.service = service;
   }
 
+  @Get()
+  getMixSources(): MixSource[] {
+    return this.service.findAll();
+  }
+
   @Put()
-  putMixSource(): string {
-    return this.service.hoi();
+  putMixSource(): MixSource {
+    return this.service.create();
   }
 }
