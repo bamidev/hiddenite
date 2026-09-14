@@ -35,7 +35,11 @@ function App() {
             <AddButton onClick={onAddMixSource} />
           </div>
           {sources.map(source => (
-            <MixSource key={source.id} source={source} />
+            <MixSource
+              key={source.id}
+              source={source}
+              onClose={() => setSources(s => s.filter(x => x.id !== source.id))}
+            />
           ))}
         </div>
       </section>

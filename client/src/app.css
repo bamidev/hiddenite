@@ -194,6 +194,10 @@
   }
 }
 
+.mix-source {
+  position: relative;
+}
+
 .close-button {
   position: absolute;
   top: 4px;
