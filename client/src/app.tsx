@@ -4,6 +4,7 @@ import MainBar from './components/main-bar.tsx'
 import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
+import Library from './components/library.tsx'
 
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
             Add mix source
           </button>
         </div>
+        <Library />
       </section>
     </>
   )
