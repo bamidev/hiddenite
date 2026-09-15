@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Queue } from './provider';
-import { Song } from '../song/provider';
+import { Queue, QueueSong } from './provider';
 
 @Injectable()
 export class QueueService {
@@ -12,10 +11,15 @@ export class QueueService {
     return queue;
   }
 
-  addSong(queueId: string, song: Song): Queue {
+  addSong(queueId: string, song: QueueSong): Queue {
     const queue = this.findOne(queueId);
     queue.songs.push(song);
     return queue;
+  }
+
+  listSongs(queueId: string) {
+    const queue = this.findOne(queueId);
+    return queue.songs.map((entry) => entry.toJSON());
   }
 
   rename(queueId: string, name: string): Queue {

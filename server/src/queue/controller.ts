@@ -1,7 +1,19 @@
-import { Body, Controller, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { randomUUID } from 'node:crypto';
 import type { Queue } from './provider';
+import { QueueSong } from './provider';
 import { QueueService } from './service';
-import type { Song } from '../song/provider';
+import { FileSong } from '../song/provider';
 
 @Controller('queue')
 export class QueueController {
@@ -10,8 +22,19 @@ export class QueueController {
   }
 
   @Put(':id/song')
-  addSong(@Param('id') id: string, @Body() song: Song): Queue {
-    return this.service.addSong(id, song);
+  @UseInterceptors(FileInterceptor('file'))
+  async addSong(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<Queue> {
+    const song = new FileSong(randomUUID(), file.originalname);
+    const queueSong = await QueueSong.create(song, file.buffer);
+    return this.service.addSong(id, queueSong);
+  }
+
+  @Get(':id/songs')
+  listSongs(@Param('id') id: string) {
+    return this.service.listSongs(id);
   }
 
   @Put(':id/name')

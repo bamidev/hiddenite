@@ -21,6 +21,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node", "multer"]
   }
 }
