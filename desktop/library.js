@@ -41,8 +41,24 @@ async function findAudioFiles(dir) {
   return files
 }
 
+function readTags(TagLib, filePath) {
+  const file = TagLib.File.createFromPath(filePath)
+  try {
+    const tags = {}
+    if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer
+    if (file.tag.album) tags.album = file.tag.album
+    if (file.tag.title) tags.title = file.tag.title
+    // NOTE: rating (ID3 POPM) isn't part of TagLib's generic cross-format Tag
+    // interface - reading/writing it would need the format-specific tag
+    // (e.g. Id3v2Tag.popularimeters), not verified yet.
+    return tags
+  } finally {
+    file.dispose()
+  }
+}
+
 async function rescanLibrary() {
-  const { parseFile } = await import('music-metadata')
+  const TagLib = await import('node-taglib-sharp')
   const musicDir = path.join(os.homedir(), 'Music')
   const files = await findAudioFiles(musicDir)
   const db = getDatabase()
@@ -53,13 +69,7 @@ async function rescanLibrary() {
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
 
   for (const filePath of files) {
-    const { common } = await parseFile(filePath)
-    const tags = {}
-    if (common.artist) tags.artist = common.artist
-    if (common.album) tags.album = common.album
-    if (common.title) tags.title = common.title
-    if (common.rating?.[0]?.rating != null) tags.rating = String(common.rating[0].rating)
-
+    const tags = readTags(TagLib, filePath)
     const { lastInsertRowid: songId } = insertSong.run(filePath, 'file')
     for (const [key, value] of Object.entries(tags)) {
       insertTag.run(songId, key, value)
@@ -70,4 +80,26 @@ async function rescanLibrary() {
   return files.length
 }
 
-module.exports = { rescanLibrary }
+const WRITABLE_TAG_KEYS = {
+  artist: (tag, value) => { tag.performers = [value] },
+  album: (tag, value) => { tag.album = value },
+  title: (tag, value) => { tag.title = value },
+}
+
+async function writeTag(filePath, key, value) {
+  const setter = WRITABLE_TAG_KEYS[key]
+  if (!setter) {
+    throw new Error(`Unsupported tag key for writing: ${key}`)
+  }
+
+  const TagLib = await import('node-taglib-sharp')
+  const file = TagLib.File.createFromPath(filePath)
+  try {
+    setter(file.tag, value)
+    file.save()
+  } finally {
+    file.dispose()
+  }
+}
+
+module.exports = { rescanLibrary, writeTag }

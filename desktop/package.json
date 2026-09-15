@@ -11,6 +11,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "music-metadata": "^11.0.0"
+    "node-taglib-sharp": "^5.2.0"
   }
 }
