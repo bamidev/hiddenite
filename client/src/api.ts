@@ -23,8 +23,8 @@ export default class Api {
   /**
    * Perform the HTTP request with the given method.
    */
-  async _fetch(method: string, objectName: string, subPath: string) {
-    const response = await fetch(`${this.baseUrl}/${objectName}/${subPath}`, {
+  async _fetch(method: string, path: string) {
+    const response = await fetch(`${this.baseUrl}/${path}`, {
       method: method,
     });
     // Raise an exception if the response status indicates failure
@@ -42,8 +42,8 @@ export default class Api {
    * @param subPath - A subpath
    * @returns A promise
    */
-  get(objectName: string, subPath: string = '') {
-    return this._fetch('GET', objectName, subPath);
+  get(path: string = '') {
+    return this._fetch('GET', path);
   }
 
   /**
@@ -53,7 +53,7 @@ export default class Api {
    * @param subPath - [TODO:description]
    * @returns [TODO:return]
    */
-  put(objectName: string, subPath: string = '') {
-    return this._fetch('PUT', objectName, subPath);
+  put(path: string = '') {
+    return this._fetch('PUT', path);
   }
 }

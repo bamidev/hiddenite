@@ -3,7 +3,7 @@ import Api from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import './app.css'
 import AddButton from './components/common/add-button.tsx'
-import MixSource, { type MixSourceData } from './components/mix-source.tsx'
+import MixSource, { type MixSourceData, type QueueData } from './components/mix-source.tsx'
 
 
 const api = new Api('http://localhost:3000')
@@ -26,6 +26,16 @@ function App() {
     setSources(s => [...s, source])
   }
 
+  async function onAddQueue(mixSourceId: string) {
+    const response = await api.put(`mix-source/${mixSourceId}/queue`)
+    const queue: QueueData = await response.json()
+    setSources(s => s.map(source =>
+      source.id === mixSourceId
+        ? { ...source, queues: [...(source.queues ?? []), queue] }
+        : source
+    ))
+  }
+
   return (
     <>
       <section id="center">
@@ -39,6 +49,7 @@ function App() {
               key={source.id}
               source={source}
               onClose={() => setSources(s => s.filter(x => x.id !== source.id))}
+              onAddQueue={() => onAddQueue(source.id)}
             />
           ))}
         </div>
