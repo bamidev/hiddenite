@@ -17,7 +17,7 @@ export default function NavBar() {
               </a>
               <ul className="dropdown-menu">
                 <li>
-                  <a className="dropdown-item" href="#">Rescan</a>
+                  <a className="dropdown-item" href="#" onClick={() => window.electron?.rescanLibrary()}>Rescan</a>
                 </li>
               </ul>
             </li>
