@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { Queue } from './provider';
 import { Song } from '../song/provider';
 
@@ -8,11 +7,7 @@ export class QueueService {
   private readonly queues: Queue[] = [];
 
   create(): Queue {
-    const queue: Queue = {
-      id: randomUUID(),
-      name: `Queue ${this.queues.length + 1}`,
-      songs: [],
-    };
+    const queue = Queue.create();
     this.queues.push(queue);
     return queue;
   }
@@ -26,6 +21,18 @@ export class QueueService {
   rename(queueId: string, name: string): Queue {
     const queue = this.findOne(queueId);
     queue.name = name;
+    return queue;
+  }
+
+  toggleShuffle(queueId: string): Queue {
+    const queue = this.findOne(queueId);
+    queue.shuffle = !queue.shuffle;
+    return queue;
+  }
+
+  toggleRepeat(queueId: string): Queue {
+    const queue = this.findOne(queueId);
+    queue.repeat = !queue.repeat;
     return queue;
   }
 

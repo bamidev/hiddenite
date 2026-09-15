@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import Api from './api.ts'
+import { api } from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import './app.css'
-import MixSource, { type MixSourceData, type QueueData } from './components/mix-source.tsx'
-
-
-const api = new Api('http://localhost:3000')
+import MixSource, { type MixSourceData } from './components/mix-source.tsx'
+import { type QueueData } from './components/queue.tsx'
 
 
 function App() {

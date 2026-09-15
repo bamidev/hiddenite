@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Put } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put } from '@nestjs/common';
 import type { Queue } from './provider';
 import { QueueService } from './service';
 import type { Song } from '../song/provider';
@@ -17,5 +17,15 @@ export class QueueController {
   @Put(':id/name')
   rename(@Param('id') id: string, @Body('name') name: string): Queue {
     return this.service.rename(id, name);
+  }
+
+  @Post(':id/shuffle')
+  toggleShuffle(@Param('id') id: string): Queue {
+    return this.service.toggleShuffle(id);
+  }
+
+  @Post(':id/repeat')
+  toggleRepeat(@Param('id') id: string): Queue {
+    return this.service.toggleRepeat(id);
   }
 }

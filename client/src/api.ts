@@ -58,4 +58,13 @@ export default class Api {
   put(path: string = '', body?: unknown) {
     return this._fetch('PUT', path, body);
   }
+
+  /**
+   * Perform a POST request.
+   */
+  post(path: string = '', body?: unknown) {
+    return this._fetch('POST', path, body);
+  }
 }
+
+export const api = new Api('http://localhost:3000');

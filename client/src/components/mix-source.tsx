@@ -1,11 +1,7 @@
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'
 import EditableLabel from './common/editable-label.tsx'
-
-export interface QueueData {
-  id: string
-  name: string
-}
+import Queue, { type QueueData } from './queue.tsx'
 
 export interface MixSourceData {
   id: string
@@ -64,7 +60,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
             aria-labelledby={`queue-tab-${source.id}-${queue.id}`}
             key={queue.id}
           >
-            {queue.name}
+            <Queue queue={queue} />
           </div>
         ))}
       </div>
