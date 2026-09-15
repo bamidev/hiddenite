@@ -1,4 +1,4 @@
-import { Queue } from '../queue/provider';
+import { Queue, QueueSong } from '../queue/provider';
 
 export interface MixSource {
   id: string;
@@ -10,7 +10,7 @@ export class QueuePoolMixSource implements MixSource {
   name: string;
   queues: Queue[];
   playing: boolean;
-  currentSongId: string | null;
+  currentSong: QueueSong | null;
   private startedAt: number | null;
   private elapsedMs: number;
 
@@ -19,7 +19,7 @@ export class QueuePoolMixSource implements MixSource {
     this.name = name;
     this.queues = queues;
     this.playing = false;
-    this.currentSongId = null;
+    this.currentSong = null;
     this.startedAt = null;
     this.elapsedMs = 0;
   }
@@ -32,10 +32,10 @@ export class QueuePoolMixSource implements MixSource {
       return;
     }
 
-    if (!this.currentSongId) {
-      const songId = this.findFirstSongId();
-      if (!songId) return;
-      this.currentSongId = songId;
+    if (!this.currentSong) {
+      const song = this.findFirstSong();
+      if (!song) return;
+      this.currentSong = song;
       this.elapsedMs = 0;
     }
 
@@ -50,10 +50,10 @@ export class QueuePoolMixSource implements MixSource {
     return this.elapsedMs;
   }
 
-  private findFirstSongId(): string | null {
+  private findFirstSong(): QueueSong | null {
     for (const queue of this.queues) {
       if (queue.songs.length > 0) {
-        return queue.songs[0].song.id;
+        return queue.songs[0];
       }
     }
     return null;
@@ -65,7 +65,7 @@ export class QueuePoolMixSource implements MixSource {
       name: this.name,
       queues: this.queues,
       playing: this.playing,
-      currentSongId: this.currentSongId,
+      currentSongId: this.currentSong?.song.id ?? null,
       elapsedMs: this.getElapsedMs(),
     };
   }

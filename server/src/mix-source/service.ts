@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { MixSource, QueuePoolMixSource } from './provider';
 import { QueueService } from '../queue/service';
-import type { Queue } from '../queue/provider';
+import type { Queue, QueueSong } from '../queue/provider';
 
 @Injectable()
 export class MixSourceService {
@@ -52,6 +52,14 @@ export class MixSourceService {
     }
     source.togglePlay();
     return source;
+  }
+
+  getCurrentSong(mixSourceId: string): QueueSong {
+    const source = this.findOne(mixSourceId);
+    if (!(source instanceof QueuePoolMixSource) || !source.currentSong) {
+      throw new NotFoundException(`Mix source ${mixSourceId} has no song playing`);
+    }
+    return source.currentSong;
   }
 
   private findOne(id: string): MixSource {
