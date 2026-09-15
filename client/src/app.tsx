@@ -71,7 +71,7 @@ function App() {
             Add mix source
           </button>
         </div>
-        <Library />
+        {window.electron?.isElectron && <Library />}
       </section>
     </>
   )

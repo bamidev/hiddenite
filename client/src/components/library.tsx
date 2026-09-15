@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface SongData {
   id: string
@@ -8,8 +8,13 @@ export interface SongData {
 const COLUMNS = ['artist', 'album', 'title', 'rating']
 
 export default function Library() {
-  const [songs] = useState<SongData[]>([])
+  const [songs, setSongs] = useState<SongData[]>([])
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (!window.electron?.isElectron) return
+    window.electron.listSongs().then(setSongs)
+  }, [])
 
   const filteredSongs = songs.filter(song =>
     Object.values(song.tags).some(value => value.toLowerCase().includes(search.toLowerCase()))
