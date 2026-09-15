@@ -9,7 +9,7 @@ export interface MixSourceData {
   queues?: QueueData[]
 }
 
-function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, queue: QueueData, active: boolean, onRename: (name: string) => void }) {
+function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId: string, queue: QueueData, active: boolean, onRename: (name: string) => void, onActivate: () => void }) {
   return (
     <li className="nav-item" role="presentation">
       <EditableLabel
@@ -24,12 +24,13 @@ function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, que
         aria-selected={active}
         value={queue.name}
         onChange={onRename}
+        onClick={onActivate}
       />
     </li>
   )
 }
 
-export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void }) {
+export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void }) {
   const queues = source.queues ?? []
 
   return (
@@ -45,6 +46,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
             queue={queue}
             active={i === 0}
             onRename={name => onRenameQueue(queue.id, name)}
+            onActivate={() => onActivateQueue(queue.id)}
           />
         ))}
         <li className="nav-item">

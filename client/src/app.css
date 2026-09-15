@@ -263,3 +263,11 @@
     background: var(--bg);
   }
 }
+
+.library-row-actions {
+  visibility: hidden;
+}
+
+.library-row:hover .library-row-actions {
+  visibility: visible;
+}

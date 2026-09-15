@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
+import type { RefObject } from 'react'
+import { api } from '../api.ts'
+import AddButton from './common/add-button.tsx'
 
 export interface SongData {
   id: string
+  path: string
+  type: string
   tags: Record<string, string>
 }
 
@@ -28,10 +33,16 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
   return pages
 }
 
-export default function Library() {
+export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
   const [songs, setSongs] = useState<SongData[]>([])
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
+
+  function onQueueSong(song: SongData) {
+    const queueId = activeQueueIdRef.current
+    if (!queueId) return
+    api.put(`queue/${queueId}/song`, { id: song.id, kind: song.type, path: song.path })
+  }
 
   useEffect(() => {
     if (!window.electron?.isElectron) return
@@ -66,14 +77,18 @@ export default function Library() {
               {COLUMNS.map(key => (
                 <th key={key} className="text-capitalize">{key}</th>
               ))}
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {pageSongs.map(song => (
-              <tr key={song.id}>
+              <tr key={song.id} className="library-row">
                 {COLUMNS.map(key => (
                   <td key={key}>{song.tags[key] ?? ''}</td>
                 ))}
+                <td className="library-row-actions">
+                  <AddButton onClick={() => onQueueSong(song)} />
+                </td>
               </tr>
             ))}
           </tbody>

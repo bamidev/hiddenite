@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import NavBar from './components/nav-bar.tsx'
@@ -10,6 +10,7 @@ import Library from './components/library.tsx'
 
 function App() {
   const [sources, setSources] = useState<MixSourceData[]>([]);
+  const activeQueueIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function loadSources() {
@@ -65,13 +66,14 @@ function App() {
               onRename={name => onRenameMixSource(source.id, name)}
               onAddQueue={() => onAddQueue(source.id)}
               onRenameQueue={(queueId, name) => onRenameQueue(source.id, queueId, name)}
+              onActivateQueue={queueId => { activeQueueIdRef.current = queueId }}
             />
           ))}
           <button type="button" className="btn btn-primary w-100" onClick={onAddMixSource}>
             Add mix source
           </button>
         </div>
-        {window.electron?.isElectron && <Library />}
+        {window.electron?.isElectron && <Library activeQueueIdRef={activeQueueIdRef} />}
       </section>
     </>
   )
