@@ -23,9 +23,11 @@ export default class Api {
   /**
    * Perform the HTTP request with the given method.
    */
-  async _fetch(method: string, path: string) {
+  async _fetch(method: string, path: string, body?: unknown) {
     const response = await fetch(`${this.baseUrl}/${path}`, {
       method: method,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
     // Raise an exception if the response status indicates failure
     if (!response.ok) {
@@ -53,7 +55,7 @@ export default class Api {
    * @param subPath - [TODO:description]
    * @returns [TODO:return]
    */
-  put(path: string = '') {
-    return this._fetch('PUT', path);
+  put(path: string = '', body?: unknown) {
+    return this._fetch('PUT', path, body);
   }
 }

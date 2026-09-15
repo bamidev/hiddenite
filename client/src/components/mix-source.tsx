@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'
 
 export interface QueueData {
   id: string
+  name: string
 }
 
 export interface MixSourceData {
@@ -11,7 +13,43 @@ export interface MixSourceData {
   queues?: QueueData[]
 }
 
-export default function MixSource({ source, onClose, onAddQueue }: { source: MixSourceData, onClose: () => void, onAddQueue: () => void }) {
+function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, queue: QueueData, active: boolean, onRename: (name: string) => void }) {
+  const [editing, setEditing] = useState(false)
+
+  if (editing) {
+    return (
+      <li className="nav-item" role="presentation">
+        <input
+          className="nav-link"
+          autoFocus
+          value={queue.name}
+          onChange={e => onRename(e.target.value)}
+          onBlur={() => setEditing(false)}
+        />
+      </li>
+    )
+  }
+
+  return (
+    <li className="nav-item" role="presentation">
+      <button
+        className={`nav-link${active ? ' active' : ''}`}
+        id={`queue-tab-${sourceId}-${queue.id}`}
+        data-bs-toggle="tab"
+        data-bs-target={`#queue-pane-${sourceId}-${queue.id}`}
+        type="button"
+        role="tab"
+        aria-controls={`queue-pane-${sourceId}-${queue.id}`}
+        aria-selected={active}
+        onDoubleClick={() => setEditing(true)}
+      >
+        {queue.name}
+      </button>
+    </li>
+  )
+}
+
+export default function MixSource({ source, onClose, onAddQueue, onRenameQueue }: { source: MixSourceData, onClose: () => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void }) {
   const queues = source.queues ?? []
 
   return (
@@ -21,20 +59,13 @@ export default function MixSource({ source, onClose, onAddQueue }: { source: Mix
 
       <ul className="nav nav-tabs" role="tablist">
         {queues.map((queue, i) => (
-          <li className="nav-item" role="presentation" key={queue.id}>
-            <button
-              className={`nav-link${i === 0 ? ' active' : ''}`}
-              id={`queue-tab-${source.id}-${queue.id}`}
-              data-bs-toggle="tab"
-              data-bs-target={`#queue-pane-${source.id}-${queue.id}`}
-              type="button"
-              role="tab"
-              aria-controls={`queue-pane-${source.id}-${queue.id}`}
-              aria-selected={i === 0}
-            >
-              {queue.id}
-            </button>
-          </li>
+          <QueueTab
+            key={queue.id}
+            sourceId={source.id}
+            queue={queue}
+            active={i === 0}
+            onRename={name => onRenameQueue(queue.id, name)}
+          />
         ))}
       </ul>
       <div className="tab-content">
@@ -46,7 +77,7 @@ export default function MixSource({ source, onClose, onAddQueue }: { source: Mix
             aria-labelledby={`queue-tab-${source.id}-${queue.id}`}
             key={queue.id}
           >
-            Queue {queue.id}
+            {queue.name}
           </div>
         ))}
       </div>

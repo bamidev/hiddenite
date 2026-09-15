@@ -36,6 +36,15 @@ function App() {
     ))
   }
 
+  async function onRenameQueue(mixSourceId: string, queueId: string, name: string) {
+    await api.put(`queue/${queueId}/name`, { name })
+    setSources(s => s.map(source =>
+      source.id === mixSourceId
+        ? { ...source, queues: (source.queues ?? []).map(queue => queue.id === queueId ? { ...queue, name } : queue) }
+        : source
+    ))
+  }
+
   return (
     <>
       <section id="center">
@@ -50,6 +59,7 @@ function App() {
               source={source}
               onClose={() => setSources(s => s.filter(x => x.id !== source.id))}
               onAddQueue={() => onAddQueue(source.id)}
+              onRenameQueue={(queueId, name) => onRenameQueue(source.id, queueId, name)}
             />
           ))}
         </div>

@@ -13,4 +13,9 @@ export class QueueController {
   addSong(@Param('id') id: string, @Body() song: Song): Queue {
     return this.service.addSong(id, song);
   }
+
+  @Put(':id/name')
+  rename(@Param('id') id: string, @Body('name') name: string): Queue {
+    return this.service.rename(id, name);
+  }
 }
