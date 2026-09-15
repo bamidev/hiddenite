@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import Api from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import './app.css'
-import AddButton from './components/common/add-button.tsx'
 import MixSource, { type MixSourceData, type QueueData } from './components/mix-source.tsx'
 
 
@@ -36,6 +35,13 @@ function App() {
     ))
   }
 
+  async function onRenameMixSource(mixSourceId: string, name: string) {
+    await api.put(`mix-source/${mixSourceId}/name`, { name })
+    setSources(s => s.map(source =>
+      source.id === mixSourceId ? { ...source, name } : source
+    ))
+  }
+
   async function onRenameQueue(mixSourceId: string, queueId: string, name: string) {
     await api.put(`queue/${queueId}/name`, { name })
     setSources(s => s.map(source =>
@@ -50,18 +56,19 @@ function App() {
       <section id="center">
         <div className='main-bar'><MainBar /></div>
         <div id="mix">
-          <div className='mix-bar'>
-            <AddButton onClick={onAddMixSource} />
-          </div>
           {sources.map(source => (
             <MixSource
               key={source.id}
               source={source}
               onClose={() => setSources(s => s.filter(x => x.id !== source.id))}
+              onRename={name => onRenameMixSource(source.id, name)}
               onAddQueue={() => onAddQueue(source.id)}
               onRenameQueue={(queueId, name) => onRenameQueue(source.id, queueId, name)}
             />
           ))}
+          <button type="button" className="btn btn-primary w-100" onClick={onAddMixSource}>
+            Add mix source
+          </button>
         </div>
       </section>
     </>

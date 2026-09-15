@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'
+import EditableLabel from './common/editable-label.tsx'
 
 export interface QueueData {
   id: string
@@ -14,25 +14,10 @@ export interface MixSourceData {
 }
 
 function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, queue: QueueData, active: boolean, onRename: (name: string) => void }) {
-  const [editing, setEditing] = useState(false)
-
-  if (editing) {
-    return (
-      <li className="nav-item" role="presentation">
-        <input
-          className="nav-link"
-          autoFocus
-          value={queue.name}
-          onChange={e => onRename(e.target.value)}
-          onBlur={() => setEditing(false)}
-        />
-      </li>
-    )
-  }
-
   return (
     <li className="nav-item" role="presentation">
-      <button
+      <EditableLabel
+        as="a"
         className={`nav-link${active ? ' active' : ''}`}
         id={`queue-tab-${sourceId}-${queue.id}`}
         data-bs-toggle="tab"
@@ -41,10 +26,9 @@ function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, que
         role="tab"
         aria-controls={`queue-pane-${sourceId}-${queue.id}`}
         aria-selected={active}
-        onDoubleClick={() => setEditing(true)}
-      >
-        {queue.name}
-      </button>
+        value={queue.name}
+        onChange={onRename}
+      />
     </li>
   )
 }

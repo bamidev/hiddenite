@@ -37,6 +37,12 @@ export class MixSourceService {
     return queue;
   }
 
+  rename(mixSourceId: string, name: string): MixSource {
+    const source = this.findOne(mixSourceId);
+    source.name = name;
+    return source;
+  }
+
   private findOne(id: string): MixSource {
     const source = this.sources.find((s) => s.id === id);
     if (!source) {

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import type { MixSource } from './provider';
 import { MixSourceService } from './service';
 import type { Queue } from '../queue/provider';
@@ -22,5 +22,10 @@ export class MixSourceController {
   @Put(':id/queue')
   addQueue(@Param('id') id: string): Queue {
     return this.service.addQueue(id);
+  }
+
+  @Put(':id/name')
+  rename(@Param('id') id: string, @Body('name') name: string): MixSource {
+    return this.service.rename(id, name);
   }
 }
