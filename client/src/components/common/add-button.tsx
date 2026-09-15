@@ -1,5 +1,5 @@
 export default function AddButton({ onClick }) {
   return <>
-    <button onClick={onClick}>+</button>
+    <button className="add-button" onClick={onClick}>+</button>
   </>
 }

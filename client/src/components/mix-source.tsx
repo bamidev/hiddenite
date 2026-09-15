@@ -67,6 +67,9 @@ export default function MixSource({ source, onClose, onAddQueue, onRenameQueue }
             onRename={name => onRenameQueue(queue.id, name)}
           />
         ))}
+        <li className="nav-item">
+          <AddButton onClick={onAddQueue} />
+        </li>
       </ul>
       <div className="tab-content">
         {queues.map((queue, i) => (
@@ -81,8 +84,6 @@ export default function MixSource({ source, onClose, onAddQueue, onRenameQueue }
           </div>
         ))}
       </div>
-
-      <AddButton onClick={onAddQueue} />
     </div>
   )
 }
