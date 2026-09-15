@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
-const { rescanLibrary } = require('./library.js')
+const { rescanLibrary, listSongs } = require('./library.js')
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -16,6 +16,7 @@ const createWindow = () => {
 }
 
 ipcMain.handle('library:rescan', () => rescanLibrary())
+ipcMain.handle('library:list', () => listSongs())
 
 app.whenReady().then(() => {
   createWindow()

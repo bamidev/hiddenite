@@ -7,7 +7,7 @@ const os = require('node:os')
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
 function getDatabase() {
-  const dbPath = path.join(app.getPath('userData'), 'library.sqlite')
+  const dbPath = path.join(app.getPath('userData'), 'pp.sqlite')
   const db = new DatabaseSync(dbPath)
   db.exec(`
     CREATE TABLE IF NOT EXISTS song (
@@ -74,6 +74,8 @@ async function rescanLibrary() {
     for (const [key, value] of Object.entries(tags)) {
       insertTag.run(songId, key, value)
     }
+
+    console.log(`Indexed file ${filePath}.`)
   }
 
   db.close()
@@ -102,4 +104,24 @@ async function writeTag(filePath, key, value) {
   }
 }
 
-module.exports = { rescanLibrary, writeTag }
+function listSongs() {
+  const db = getDatabase()
+  const songs = db.prepare('SELECT id, path, type FROM song').all()
+  const tagRows = db.prepare('SELECT song_id, key, value FROM tag').all()
+  db.close()
+
+  const tagsBySongId = new Map()
+  for (const row of tagRows) {
+    if (!tagsBySongId.has(row.song_id)) tagsBySongId.set(row.song_id, {})
+    tagsBySongId.get(row.song_id)[row.key] = row.value
+  }
+
+  return songs.map(song => ({
+    id: String(song.id),
+    path: song.path,
+    type: song.type,
+    tags: tagsBySongId.get(song.id) ?? {},
+  }))
+}
+
+module.exports = { rescanLibrary, writeTag, listSongs }
