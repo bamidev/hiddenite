@@ -33,13 +33,13 @@ function QueueTab({ sourceId, queue, active, onRename }: { sourceId: string, que
   )
 }
 
-export default function MixSource({ source, onClose, onAddQueue, onRenameQueue }: { source: MixSourceData, onClose: () => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void }) {
+export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void }) {
   const queues = source.queues ?? []
 
   return (
     <div className="mix-source">
       <CloseButton onClick={onClose} />
-      {source.name}
+      <EditableLabel value={source.name} onChange={onRename} />
 
       <ul className="nav nav-tabs" role="tablist">
         {queues.map((queue, i) => (
