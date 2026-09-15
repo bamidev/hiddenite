@@ -28,4 +28,9 @@ export class QueueController {
   toggleRepeat(@Param('id') id: string): Queue {
     return this.service.toggleRepeat(id);
   }
+
+  @Post(':id/auto-add')
+  toggleAutoAdd(@Param('id') id: string): Queue {
+    return this.service.toggleAutoAdd(id);
+  }
 }

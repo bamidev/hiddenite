@@ -9,6 +9,7 @@ export class Queue {
   songs: Song[];
   shuffle: boolean;
   repeat: boolean;
+  autoAdd: boolean;
 
   constructor(id: string, name: string) {
     this.id = id;
@@ -16,6 +17,7 @@ export class Queue {
     this.songs = [];
     this.shuffle = false;
     this.repeat = false;
+    this.autoAdd = false;
   }
 
   static create(): Queue {

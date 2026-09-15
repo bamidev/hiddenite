@@ -36,6 +36,12 @@ export class QueueService {
     return queue;
   }
 
+  toggleAutoAdd(queueId: string): Queue {
+    const queue = this.findOne(queueId);
+    queue.autoAdd = !queue.autoAdd;
+    return queue;
+  }
+
   private findOne(id: string): Queue {
     const queue = this.queues.find((q) => q.id === id);
     if (!queue) {

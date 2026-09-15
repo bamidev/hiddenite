@@ -6,11 +6,13 @@ export interface QueueData {
   name: string
   shuffle: boolean
   repeat: boolean
+  autoAdd: boolean
 }
 
 export default function Queue({ queue }: { queue: QueueData }) {
   const [shuffle, setShuffle] = useState(queue.shuffle)
   const [repeat, setRepeat] = useState(queue.repeat)
+  const [autoAdd, setAutoAdd] = useState(queue.autoAdd)
 
   async function onToggleShuffle() {
     const response = await api.post(`queue/${queue.id}/shuffle`)
@@ -22,6 +24,12 @@ export default function Queue({ queue }: { queue: QueueData }) {
     const response = await api.post(`queue/${queue.id}/repeat`)
     const updated: QueueData = await response.json()
     setRepeat(updated.repeat)
+  }
+
+  async function onToggleAutoAdd() {
+    const response = await api.post(`queue/${queue.id}/auto-add`)
+    const updated: QueueData = await response.json()
+    setAutoAdd(updated.autoAdd)
   }
 
   return (
@@ -39,6 +47,13 @@ export default function Queue({ queue }: { queue: QueueData }) {
         onClick={onToggleRepeat}
       >
         Repeat
+      </button>
+      <button
+        type="button"
+        className={`btn btn-sm ${autoAdd ? 'btn-primary' : 'btn-outline-secondary'}`}
+        onClick={onToggleAutoAdd}
+      >
+        Auto-add
       </button>
     </>
   )
