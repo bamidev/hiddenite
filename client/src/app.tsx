@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api.ts'
 import MainBar from './components/main-bar.tsx'
+import NavBar from './components/nav-bar.tsx'
 import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
@@ -52,6 +53,7 @@ function App() {
 
   return (
     <>
+      <NavBar />
       <section id="center">
         <div className='main-bar'><MainBar /></div>
         <div id="mix">
