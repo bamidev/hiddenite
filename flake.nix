@@ -13,6 +13,7 @@
       in {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
+            electron
             nest-cli
             nodejs_26
             typescript-language-server
