@@ -43,6 +43,17 @@ export class MixSourceService {
     return source;
   }
 
+  togglePlay(mixSourceId: string): MixSource {
+    const source = this.findOne(mixSourceId);
+    if (!(source instanceof QueuePoolMixSource)) {
+      throw new NotFoundException(
+        `Mix source ${mixSourceId} does not support playback`,
+      );
+    }
+    source.togglePlay();
+    return source;
+  }
+
   private findOne(id: string): MixSource {
     const source = this.sources.find((s) => s.id === id);
     if (!source) {

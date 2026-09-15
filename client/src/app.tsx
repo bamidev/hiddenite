@@ -52,6 +52,12 @@ function App() {
     ))
   }
 
+  async function onTogglePlay(mixSourceId: string) {
+    const response = await api.post(`mix-source/${mixSourceId}/play`)
+    const updated: MixSourceData = await response.json()
+    setSources(s => s.map(source => source.id === mixSourceId ? updated : source))
+  }
+
   return (
     <>
       <NavBar />
@@ -67,6 +73,7 @@ function App() {
               onAddQueue={() => onAddQueue(source.id)}
               onRenameQueue={(queueId, name) => onRenameQueue(source.id, queueId, name)}
               onActivateQueue={queueId => { activeQueueIdRef.current = queueId }}
+              onTogglePlay={() => onTogglePlay(source.id)}
             />
           ))}
           <button type="button" className="btn btn-primary w-100" onClick={onAddMixSource}>

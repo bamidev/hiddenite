@@ -7,6 +7,16 @@ export interface MixSourceData {
   id: string
   name: string
   queues?: QueueData[]
+  playing: boolean
+  currentSongId: string | null
+  elapsedMs: number
+}
+
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId: string, queue: QueueData, active: boolean, onRename: (name: string) => void, onActivate: () => void }) {
@@ -30,13 +40,17 @@ function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId:
   )
 }
 
-export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void }) {
+export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue, onTogglePlay }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void, onTogglePlay: () => void }) {
   const queues = source.queues ?? []
 
   return (
     <div className="mix-source">
       <CloseButton onClick={onClose} />
       <EditableLabel value={source.name} onChange={onRename} />
+      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onTogglePlay}>
+        {source.playing ? 'Pause' : 'Play'}
+      </button>
+      {source.currentSongId && <span>{formatElapsed(source.elapsedMs)}</span>}
 
       <ul className="nav nav-tabs" role="tablist">
         {queues.map((queue, i) => (
