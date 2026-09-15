@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api.ts'
+import SongTable, { type SongData } from './song-table.tsx'
 
 export interface QueueData {
   id: string
@@ -13,6 +14,23 @@ export default function Queue({ queue }: { queue: QueueData }) {
   const [shuffle, setShuffle] = useState(queue.shuffle)
   const [repeat, setRepeat] = useState(queue.repeat)
   const [autoAdd, setAutoAdd] = useState(queue.autoAdd)
+  const [songs, setSongs] = useState<SongData[]>([])
+
+  useEffect(() => {
+    function loadSongs() {
+      api.get(`queue/${queue.id}/songs`).then(r => r.json()).then(setSongs)
+    }
+
+    loadSongs()
+
+    function onSongAdded(event: Event) {
+      const { queueId } = (event as CustomEvent<{ queueId: string }>).detail
+      if (queueId === queue.id) loadSongs()
+    }
+
+    window.addEventListener('queue-song-added', onSongAdded)
+    return () => window.removeEventListener('queue-song-added', onSongAdded)
+  }, [queue.id])
 
   async function onToggleShuffle() {
     const response = await api.post(`queue/${queue.id}/shuffle`)
@@ -55,6 +73,7 @@ export default function Queue({ queue }: { queue: QueueData }) {
       >
         Auto-add
       </button>
+      <SongTable songs={songs} />
     </>
   )
 }

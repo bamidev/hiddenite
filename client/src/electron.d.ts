@@ -6,6 +6,7 @@ declare global {
       isElectron: boolean
       rescanLibrary: () => Promise<number>
       listSongs: () => Promise<{ id: string, path: string, type: string, tags: Record<string, string> }[]>
+      readFile: (path: string) => Promise<Uint8Array>
     }
   }
 }

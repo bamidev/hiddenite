@@ -24,10 +24,11 @@ export default class Api {
    * Perform the HTTP request with the given method.
    */
   async _fetch(method: string, path: string, body?: unknown) {
+    const isFormData = body instanceof FormData;
     const response = await fetch(`${this.baseUrl}/${path}`, {
       method: method,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined || isFormData ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body)),
     });
     // Raise an exception if the response status indicates failure
     if (!response.ok) {
