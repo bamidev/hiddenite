@@ -18,7 +18,7 @@ export default function Queue({ queue }: { queue: QueueData }) {
 
   useEffect(() => {
     function loadSongs() {
-      api.get(`queue/${queue.id}/songs`).then(r => r.json()).then(setSongs)
+      api.get(`queue/${queue.id}/song`).then(r => r.json()).then(setSongs)
     }
 
     loadSongs()

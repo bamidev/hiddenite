@@ -32,7 +32,7 @@ export class QueueController {
     return this.service.addSong(id, queueSong);
   }
 
-  @Get(':id/songs')
+  @Get(':id/song')
   listSongs(@Param('id') id: string) {
     return this.service.listSongs(id);
   }
