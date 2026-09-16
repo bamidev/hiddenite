@@ -2,18 +2,22 @@ import {
   Body,
   Controller,
   Get,
+  type MessageEvent,
   NotFoundException,
   Param,
   Post,
   Put,
   Req,
   Res,
+  Sse,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { map, type Observable } from 'rxjs';
 import { extname } from 'node:path';
 import type { MixSource } from './provider';
 import { MixSourceService } from './service';
 import type { Queue } from '../queue/provider';
+import type { PlaybackEvent } from 'common';
 
 const MIME_TYPES: Record<string, string> = {
   '.mp3': 'audio/mpeg',
@@ -57,6 +61,13 @@ export class MixSourceController {
   @Post(':id/play')
   togglePlay(@Param('id') id: string): MixSource {
     return this.service.togglePlay(id);
+  }
+
+  @Sse(':id/events')
+  events(@Param('id') id: string): Observable<MessageEvent> {
+    return this.service.getEvents(id).pipe(
+      map((event: PlaybackEvent) => ({ data: event })),
+    );
   }
 
   @Get(':id/stream')

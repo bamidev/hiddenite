@@ -3,30 +3,31 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, extname } from 'node:path';
 import { FileSong, Song } from '../song/provider';
+import type { ExtractedMetadata } from 'common';
 
 export class QueueSong {
   song: Song;
   data?: Buffer;
-  tags: Record<string, string>;
+  metadata: ExtractedMetadata;
 
-  constructor(song: Song, data: Buffer | undefined, tags: Record<string, string>) {
+  constructor(song: Song, data: Buffer | undefined, metadata: ExtractedMetadata) {
     this.song = song;
     this.data = data;
-    this.tags = tags;
+    this.metadata = metadata;
   }
 
   static async create(song: Song, data?: Buffer): Promise<QueueSong> {
-    const tags = await QueueSong.extractTags(song, data);
-    return new QueueSong(song, data, tags);
+    const metadata = await QueueSong.extractMetadata(song, data);
+    return new QueueSong(song, data, metadata);
   }
 
-  private static async extractTags(
+  private static async extractMetadata(
     song: Song,
     data?: Buffer,
-  ): Promise<Record<string, string>> {
+  ): Promise<ExtractedMetadata> {
     if (!(song instanceof FileSong) || !data) {
-      // TODO: resolve tags for non-file songs (e.g. YouTube metadata)
-      return {};
+      // TODO: resolve metadata for non-file songs (e.g. YouTube)
+      return { tags: {}, duration: null };
     }
 
     const TagLib = await import('node-taglib-sharp');
@@ -40,7 +41,8 @@ export class QueueSong {
         if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer;
         if (file.tag.album) tags.album = file.tag.album;
         if (file.tag.title) tags.title = file.tag.title;
-        return tags;
+        const duration = file.properties.durationMilliseconds || null;
+        return { tags, duration };
       } finally {
         file.dispose();
       }
@@ -50,7 +52,7 @@ export class QueueSong {
   }
 
   toJSON() {
-    return { id: this.song.id, kind: this.song.kind, tags: this.tags };
+    return { id: this.song.id, kind: this.song.kind, tags: this.metadata.tags };
   }
 }
 

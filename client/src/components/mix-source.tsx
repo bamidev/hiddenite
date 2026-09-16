@@ -1,7 +1,11 @@
+import { useEffect } from 'react'
+import type { PlaybackEvent } from 'common'
+import { api } from '../api.ts'
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'
 import EditableLabel from './common/editable-label.tsx'
 import Queue, { type QueueData } from './queue.tsx'
+import SongPlayer from './song-player.tsx'
 
 export interface MixSourceData {
   id: string
@@ -40,8 +44,14 @@ function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId:
   )
 }
 
-export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue, onTogglePlay }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void, onTogglePlay: () => void }) {
+export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue, onTogglePlay, onPlaybackEvent }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void, onTogglePlay: () => void, onPlaybackEvent: (event: PlaybackEvent) => void }) {
   const queues = source.queues ?? []
+
+  useEffect(() => {
+    const eventSource = new EventSource(`${api.baseUrl}/mix-source/${source.id}/events`)
+    eventSource.onmessage = e => onPlaybackEvent(JSON.parse(e.data))
+    return () => eventSource.close()
+  }, [source.id])
 
   return (
     <div className="mix-source">
@@ -50,7 +60,17 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
       <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onTogglePlay}>
         {source.playing ? 'Pause' : 'Play'}
       </button>
-      {source.currentSongId && <span>{formatElapsed(source.elapsedMs)}</span>}
+      {source.currentSongId && (
+        <>
+          <span>{formatElapsed(source.elapsedMs)}</span>
+          <SongPlayer
+            key={source.currentSongId}
+            mixSourceId={source.id}
+            elapsedMs={source.elapsedMs}
+            playing={source.playing}
+          />
+        </>
+      )}
 
       <ul className="nav nav-tabs" role="tablist">
         {queues.map((queue, i) => (
