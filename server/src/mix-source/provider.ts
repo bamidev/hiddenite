@@ -45,7 +45,7 @@ export class QueuePoolMixSource implements MixSource {
   private play(): void {
     const isNewSong = !this.currentSong;
     if (!this.currentSong) {
-      const song = this.findFirstSong();
+      const song = this.takeFirstSong();
       if (!song) return;
       this.currentSong = song;
       this.elapsedMs = 0;
@@ -81,9 +81,7 @@ export class QueuePoolMixSource implements MixSource {
   }
 
   private advance(): void {
-    this.removeCurrentSongFromQueue();
-
-    const next = this.findFirstSong();
+    const next = this.takeFirstSong();
     this.currentSong = next;
     this.elapsedMs = 0;
     this.startedAt = next ? Date.now() : null;
@@ -108,17 +106,6 @@ export class QueuePoolMixSource implements MixSource {
     this.events.next(event);
   }
 
-  private removeCurrentSongFromQueue(): void {
-    if (!this.currentSong) return;
-    for (const queue of this.queues) {
-      const index = queue.songs.indexOf(this.currentSong);
-      if (index !== -1) {
-        queue.songs.splice(index, 1);
-        return;
-      }
-    }
-  }
-
   private scheduleAdvance(): void {
     this.clearTimer();
     const duration = this.currentSong?.metadata.duration;
@@ -141,10 +128,10 @@ export class QueuePoolMixSource implements MixSource {
     return this.elapsedMs;
   }
 
-  private findFirstSong(): QueueSong | null {
+  private takeFirstSong(): QueueSong | null {
     for (const queue of this.queues) {
       if (queue.songs.length > 0) {
-        return queue.songs[0];
+        return queue.songs.shift() ?? null;
       }
     }
     return null;
