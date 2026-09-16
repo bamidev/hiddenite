@@ -34,6 +34,10 @@ function App() {
         ? { ...source, queues: [...(source.queues ?? []), queue] }
         : source
     ))
+
+    // Set the current active queue to the new queue, if no active queue is there yet
+    if (activeQueueIdRef.current == null)
+      activeQueueIdRef.current = queue.id
   }
 
   async function onRenameMixSource(mixSourceId: string, name: string) {
