@@ -6,6 +6,8 @@ import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
 import Library from './components/library.tsx'
+import RemoteLibrary from './components/remote-library.tsx'
+import CollapsibleSection from './components/common/collapsible-section.tsx'
 
 
 function App() {
@@ -77,7 +79,14 @@ function App() {
             Add mix source
           </button>
         </div>
-        {window.electron?.isElectron && <Library activeQueueIdRef={activeQueueIdRef} />}
+        <CollapsibleSection id="remote-library-section" title="Remote library">
+          <RemoteLibrary />
+        </CollapsibleSection>
+        {window.electron?.isElectron && (
+          <CollapsibleSection id="local-library-section" title="Local library">
+            <Library activeQueueIdRef={activeQueueIdRef} />
+          </CollapsibleSection>
+        )}
       </section>
     </>
   )
