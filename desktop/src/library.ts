@@ -3,7 +3,7 @@ import { app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
-import { extractBandcampTags, extractYouTubeTags } from 'common'
+import { extractBandcampMetadata, extractYouTubeTags } from 'common'
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
@@ -106,7 +106,7 @@ export async function writeTag(filePath: string, key: string, value: string): Pr
 }
 
 export async function addUrlSong(kind: string, url: string): Promise<void> {
-  const tags = kind === 'bandcamp' ? extractBandcampTags(url)
+  const tags = kind === 'bandcamp' ? (await extractBandcampMetadata(url)).tags
     : kind === 'youtube' ? await extractYouTubeTags(url)
     : {}
 

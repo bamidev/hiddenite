@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
-import { extractBandcampTags, extractYouTubeTags, extractYouTubeVideoId } from 'common';
+import { extractBandcampMetadata, extractYouTubeTags, extractYouTubeVideoId } from 'common';
 import type { ExtractedMetadata, Song } from 'common';
 
 export class QueueSong {
@@ -27,7 +27,7 @@ export class QueueSong {
     data?: Buffer,
   ): Promise<ExtractedMetadata> {
     if (song instanceof BandcampSong) {
-      return QueueSong.extractBandcampMetadata(song);
+      return extractBandcampMetadata(song.path);
     }
 
     if (song instanceof YouTubeSong) {
@@ -39,10 +39,6 @@ export class QueueSong {
     }
 
     return { tags: {}, duration: null };
-  }
-
-  private static extractBandcampMetadata(song: BandcampSong): ExtractedMetadata {
-    return { tags: extractBandcampTags(song.path), duration: null };
   }
 
   private static async extractYouTubeMetadata(
