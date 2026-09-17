@@ -38,9 +38,11 @@ export default function SongTable<T extends SongData>({ songs, renderActions }: 
     setPage(0)
   }, [search])
 
-  const filteredSongs = songs.filter(song =>
-    Object.values(song.tags).some(value => value.toLowerCase().includes(search.toLowerCase()))
-  )
+  const filteredSongs = search
+    ? songs.filter(song =>
+        Object.values(song.tags).some(value => value.toLowerCase().includes(search.toLowerCase()))
+      )
+    : songs
 
   const pageCount = Math.max(1, Math.ceil(filteredSongs.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount - 1)

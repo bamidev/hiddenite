@@ -3,6 +3,7 @@ import { app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
+import { extractBandcampTags, extractYouTubeTags } from 'common'
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
@@ -104,9 +105,19 @@ export async function writeTag(filePath: string, key: string, value: string): Pr
   }
 }
 
-export function addUrlSong(kind: string, url: string): void {
+export async function addUrlSong(kind: string, url: string): Promise<void> {
+  const tags = kind === 'bandcamp' ? extractBandcampTags(url)
+    : kind === 'youtube' ? await extractYouTubeTags(url)
+    : {}
+
   const db = getDatabase()
-  db.prepare('INSERT INTO song (path, type) VALUES (?, ?)').run(url, kind)
+  const { lastInsertRowid: songId } = db
+    .prepare('INSERT INTO song (path, type) VALUES (?, ?)')
+    .run(url, kind)
+  const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
+  for (const [key, value] of Object.entries(tags)) {
+    insertTag.run(songId as number, key, value)
+  }
   db.close()
 }
 

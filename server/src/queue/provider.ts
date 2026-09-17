@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
+import { extractBandcampTags, extractYouTubeTags, extractYouTubeVideoId } from 'common';
 import type { ExtractedMetadata, Song } from 'common';
 
 export class QueueSong {
@@ -41,44 +42,18 @@ export class QueueSong {
   }
 
   private static extractBandcampMetadata(song: BandcampSong): ExtractedMetadata {
-    const tags: Record<string, string> = {};
-    try {
-      const { hostname, pathname } = new URL(song.path);
-      const subdomain = hostname.split('.')[0];
-      if (subdomain) tags.artist = subdomain;
-
-      const segments = pathname.split('/').filter(Boolean);
-      const track = segments[segments.length - 1];
-      if (track) tags.title = track;
-    } catch {
-      // ignore malformed URL
-    }
-    return { tags, duration: null };
+    return { tags: extractBandcampTags(song.path), duration: null };
   }
 
   private static async extractYouTubeMetadata(
     song: YouTubeSong,
   ): Promise<ExtractedMetadata> {
-    const videoId = QueueSong.extractYouTubeVideoId(song.path);
+    const videoId = extractYouTubeVideoId(song.path);
     if (!videoId) {
       throw new Error(`Could not extract YouTube video ID from URL: ${song.path}`);
     }
 
-    const tags: Record<string, string> = { title: videoId };
-
-    try {
-      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(song.path)}&format=json`;
-      const response = await fetch(oembedUrl);
-      if (!response.ok) {
-        throw new Error(`oEmbed request failed with status ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.title) tags.title = data.title;
-      if (data.author_name) tags.artist = data.author_name;
-    } catch (err) {
-      console.warn(`Failed to enrich YouTube metadata via oEmbed for ${song.path}:`, err);
-    }
-
+    const tags = await extractYouTubeTags(song.path);
     const duration = await QueueSong.scrapeYouTubeDuration(videoId);
 
     return { tags, duration };
@@ -97,21 +72,6 @@ export class QueueSong {
       throw new Error(`Could not find video duration for YouTube video ${videoId}`);
     }
     return Number(match[1]) * 1000;
-  }
-
-  private static extractYouTubeVideoId(url: string): string | null {
-    try {
-      const { hostname, pathname, searchParams } = new URL(url);
-      if (hostname.endsWith('youtu.be')) {
-        return pathname.slice(1) || null;
-      }
-      const v = searchParams.get('v');
-      if (v) return v;
-      const match = pathname.match(/\/(?:embed|shorts)\/([^/?]+)/);
-      return match ? match[1] : null;
-    } catch {
-      return null;
-    }
   }
 
   private static async extractFileMetadata(

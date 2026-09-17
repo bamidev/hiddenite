@@ -2,5 +2,13 @@
   "name": "common",
   "version": "0.0.0",
   "private": true,
-  "types": "playback-event.ts"
+  "main": "dist/playback-event.js",
+  "types": "dist/playback-event.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
+  }
 }

@@ -1,6 +1,7 @@
 import type { Song } from './song';
 
 export type { Song };
+export { extractBandcampTags, extractYouTubeVideoId, extractYouTubeTags } from './song-metadata';
 
 export interface ExtractedMetadata {
   tags: Record<string, string>;
