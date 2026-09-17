@@ -9,6 +9,7 @@ declare global {
       readFile: (path: string) => Promise<Uint8Array>
       addUrlSong: (kind: string, url: string) => Promise<void>
       addFileSong: (path: string) => Promise<void>
+      clickAt: (x: number, y: number) => Promise<void>
     }
   }
 }
