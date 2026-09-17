@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.ts'
 import SongTable, { type SongData } from './song-table.tsx'
+import AddSongDialog from './add-song-dialog.tsx'
 
 export interface QueueData {
   id: string
@@ -82,6 +83,18 @@ export default function Queue({ queue }: { queue: QueueData }) {
       >
         Auto-add
       </button>
+      <AddSongDialog
+        id={`add-song-modal-${queue.id}`}
+        onAddFile={async file => {
+          const formData = new FormData()
+          formData.append('file', file, file.name)
+          await api.put(`queue/${queue.id}/song`, formData)
+        }}
+        onAddUrl={async (kind, url) => {
+          await api.put(`queue/${queue.id}/song/url`, { kind, url })
+        }}
+        onAdded={() => window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId: queue.id } }))}
+      />
       <SongTable songs={songs} />
     </>
   )

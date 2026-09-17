@@ -1,0 +1,10 @@
+import { contextBridge, ipcRenderer } from 'electron'
+
+contextBridge.exposeInMainWorld('electron', {
+  isElectron: true,
+  rescanLibrary: () => ipcRenderer.invoke('library:rescan'),
+  listSongs: () => ipcRenderer.invoke('library:list'),
+  readFile: (path: string) => ipcRenderer.invoke('fs:read-file', path),
+  addUrlSong: (kind: string, url: string) => ipcRenderer.invoke('library:add-url-song', kind, url),
+  addFileSong: (path: string) => ipcRenderer.invoke('library:add-file-song', path),
+})

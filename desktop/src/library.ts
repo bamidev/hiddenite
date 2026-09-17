@@ -1,8 +1,8 @@
-const { DatabaseSync } = require('node:sqlite')
-const { app } = require('electron')
-const fs = require('node:fs/promises')
-const path = require('node:path')
-const os = require('node:os')
+import { DatabaseSync } from 'node:sqlite'
+import { app } from 'electron'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import os from 'node:os'
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
@@ -27,9 +27,9 @@ function getDatabase() {
   return db
 }
 
-async function findAudioFiles(dir) {
+async function findAudioFiles(dir: string): Promise<string[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true })
-  const files = []
+  const files: string[] = []
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
@@ -41,10 +41,10 @@ async function findAudioFiles(dir) {
   return files
 }
 
-function readTags(TagLib, filePath) {
+function readTags(TagLib: typeof import('node-taglib-sharp'), filePath: string): Record<string, string> {
   const file = TagLib.File.createFromPath(filePath)
   try {
-    const tags = {}
+    const tags: Record<string, string> = {}
     if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer
     if (file.tag.album) tags.album = file.tag.album
     if (file.tag.title) tags.title = file.tag.title
@@ -57,7 +57,7 @@ function readTags(TagLib, filePath) {
   }
 }
 
-async function rescanLibrary() {
+export async function rescanLibrary(): Promise<number> {
   const TagLib = await import('node-taglib-sharp')
   const musicDir = path.join(os.homedir(), 'Music')
   const files = await findAudioFiles(musicDir)
@@ -72,7 +72,7 @@ async function rescanLibrary() {
     const tags = readTags(TagLib, filePath)
     const { lastInsertRowid: songId } = insertSong.run(filePath, 'file')
     for (const [key, value] of Object.entries(tags)) {
-      insertTag.run(songId, key, value)
+      insertTag.run(songId as number, key, value)
     }
 
     console.log(`Indexed file ${filePath}.`)
@@ -82,13 +82,13 @@ async function rescanLibrary() {
   return files.length
 }
 
-const WRITABLE_TAG_KEYS = {
+const WRITABLE_TAG_KEYS: Record<string, (tag: any, value: string) => void> = {
   artist: (tag, value) => { tag.performers = [value] },
   album: (tag, value) => { tag.album = value },
   title: (tag, value) => { tag.title = value },
 }
 
-async function writeTag(filePath, key, value) {
+export async function writeTag(filePath: string, key: string, value: string): Promise<void> {
   const setter = WRITABLE_TAG_KEYS[key]
   if (!setter) {
     throw new Error(`Unsupported tag key for writing: ${key}`)
@@ -104,16 +104,36 @@ async function writeTag(filePath, key, value) {
   }
 }
 
-function listSongs() {
+export function addUrlSong(kind: string, url: string): void {
   const db = getDatabase()
-  const songs = db.prepare('SELECT id, path, type FROM song').all()
-  const tagRows = db.prepare('SELECT song_id, key, value FROM tag').all()
+  db.prepare('INSERT INTO song (path, type) VALUES (?, ?)').run(url, kind)
+  db.close()
+}
+
+export async function addFileSong(filePath: string): Promise<void> {
+  const TagLib = await import('node-taglib-sharp')
+  const tags = readTags(TagLib, filePath)
+  const db = getDatabase()
+  const { lastInsertRowid: songId } = db
+    .prepare('INSERT INTO song (path, type) VALUES (?, ?)')
+    .run(filePath, 'file')
+  const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
+  for (const [key, value] of Object.entries(tags)) {
+    insertTag.run(songId as number, key, value)
+  }
+  db.close()
+}
+
+export function listSongs() {
+  const db = getDatabase()
+  const songs = db.prepare('SELECT id, path, type FROM song').all() as { id: number, path: string, type: string }[]
+  const tagRows = db.prepare('SELECT song_id, key, value FROM tag').all() as { song_id: number, key: string, value: string }[]
   db.close()
 
-  const tagsBySongId = new Map()
+  const tagsBySongId = new Map<number, Record<string, string>>()
   for (const row of tagRows) {
     if (!tagsBySongId.has(row.song_id)) tagsBySongId.set(row.song_id, {})
-    tagsBySongId.get(row.song_id)[row.key] = row.value
+    tagsBySongId.get(row.song_id)![row.key] = row.value
   }
 
   return songs.map(song => ({
@@ -123,5 +143,3 @@ function listSongs() {
     tags: tagsBySongId.get(song.id) ?? {},
   }))
 }
-
-module.exports = { rescanLibrary, writeTag, listSongs }

@@ -5,12 +5,19 @@
   "license": "MIT",
   "author": "Bamidev",
   "type": "commonjs",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "electron .",
+    "build": "tsc",
+    "start": "npm run build && electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "common": "file:../common",
     "node-taglib-sharp": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "electron": "^44.4.1",
+    "typescript": "^5.9.3"
   }
 }

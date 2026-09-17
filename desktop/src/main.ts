@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('node:path')
-const fs = require('node:fs/promises')
-const { rescanLibrary, listSongs } = require('./library.js')
+import { app, BrowserWindow, ipcMain } from 'electron'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import { rescanLibrary, listSongs, addUrlSong, addFileSong } from './library'
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -19,7 +19,9 @@ const createWindow = () => {
 
 ipcMain.handle('library:rescan', () => rescanLibrary())
 ipcMain.handle('library:list', () => listSongs())
-ipcMain.handle('fs:read-file', (_event, filePath) => fs.readFile(filePath))
+ipcMain.handle('library:add-url-song', (_event, kind: string, url: string) => addUrlSong(kind, url))
+ipcMain.handle('library:add-file-song', (_event, filePath: string) => addFileSong(filePath))
+ipcMain.handle('fs:read-file', (_event, filePath: string) => fs.readFile(filePath))
 
 app.whenReady().then(() => {
   createWindow()

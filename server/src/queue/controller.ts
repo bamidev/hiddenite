@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,7 +14,12 @@ import { randomUUID } from 'node:crypto';
 import type { Queue } from './provider';
 import { QueueSong } from './provider';
 import { QueueService } from './service';
-import { FileSong } from '../song/provider';
+import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
+
+const URL_SONG_KINDS = {
+  bandcamp: BandcampSong,
+  youtube: YouTubeSong,
+};
 
 @Controller('queue')
 export class QueueController {
@@ -29,6 +35,21 @@ export class QueueController {
   ): Promise<Queue> {
     const song = new FileSong(randomUUID(), file.originalname);
     const queueSong = await QueueSong.create(song, file.buffer);
+    return this.service.addSong(id, queueSong);
+  }
+
+  @Put(':id/song/url')
+  async addSongByUrl(
+    @Param('id') id: string,
+    @Body('kind') kind: string,
+    @Body('url') url: string,
+  ): Promise<Queue> {
+    const SongClass = URL_SONG_KINDS[kind as keyof typeof URL_SONG_KINDS];
+    if (!SongClass) {
+      throw new BadRequestException(`Unsupported song kind: ${kind}`);
+    }
+    const song = new SongClass(randomUUID(), url);
+    const queueSong = await QueueSong.create(song);
     return this.service.addSong(id, queueSong);
   }
 
