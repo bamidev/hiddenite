@@ -32,9 +32,14 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
       return
     }
 
-    const data = await window.electron.readFile(song.path)
     const formData = new FormData()
-    formData.append('file', new Blob([data]), song.path.split('/').pop())
+    formData.append('kind', song.type)
+    if (song.type === 'file') {
+      const data = await window.electron.readFile(song.path)
+      formData.append('file', new Blob([data]), song.path.split('/').pop())
+    } else {
+      formData.append('url', song.path)
+    }
     await api.put(`queue/${queueId}/song`, formData)
     window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId } }))
   }
