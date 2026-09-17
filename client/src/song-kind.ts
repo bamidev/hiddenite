@@ -7,7 +7,7 @@ const YOUTU_BE_HOSTNAME = 'youtu.be'
 export function detectSongKind(url: string): SongKind | null {
   try {
     const { hostname } = new URL(url)
-    if (hostname.endsWith(BANDCAMP_HOSTNAME)) return 'bandcamp'
+    // Bandcamp URLs are temporarily disabled, see BANDCAMP_HOSTNAME.
     if (hostname.endsWith(YOUTUBE_HOSTNAME) || hostname.endsWith(YOUTU_BE_HOSTNAME)) return 'youtube'
   } catch {
     return null
