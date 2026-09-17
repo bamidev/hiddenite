@@ -102,7 +102,7 @@ export class QueuePoolMixSource implements MixSource {
       event: 'new',
       songId: this.currentSong.song.id,
       queueId,
-      metadata: this.currentSong.metadata,
+      song: { ...this.currentSong.song, metadata: this.currentSong.metadata },
       elapsed: this.getElapsed(),
     };
     this.events.next(event);
@@ -146,8 +146,9 @@ export class QueuePoolMixSource implements MixSource {
       name: this.name,
       queues: this.queues,
       playing: this.playing,
-      currentSongId: this.currentSong?.song.id ?? null,
-      currentSongMetadata: this.currentSong?.metadata ?? null,
+      currentSong: this.currentSong
+        ? { ...this.currentSong.song, metadata: this.currentSong.metadata }
+        : null,
       elapsedMs: this.getElapsed(),
     };
   }

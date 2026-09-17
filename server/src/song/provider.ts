@@ -1,8 +1,4 @@
-export interface Song {
-  id: string;
-  kind: string;
-  path: string;
-}
+import type { Song } from 'common';
 
 export class FileSong implements Song {
   readonly kind = 'file';

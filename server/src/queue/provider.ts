@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, extname } from 'node:path';
-import { FileSong, Song } from '../song/provider';
-import type { ExtractedMetadata } from 'common';
+import { BandcampSong, FileSong } from '../song/provider';
+import type { ExtractedMetadata, Song } from 'common';
 
 export class QueueSong {
   song: Song;
@@ -25,11 +25,38 @@ export class QueueSong {
     song: Song,
     data?: Buffer,
   ): Promise<ExtractedMetadata> {
-    if (!(song instanceof FileSong) || !data) {
-      // TODO: resolve metadata for non-file songs (e.g. YouTube)
-      return { tags: {}, duration: null };
+    if (song instanceof BandcampSong) {
+      return QueueSong.extractBandcampMetadata(song);
     }
 
+    if (song instanceof FileSong && data) {
+      return QueueSong.extractFileMetadata(song, data);
+    }
+
+    // TODO: resolve metadata for other non-file songs (e.g. YouTube)
+    return { tags: {}, duration: null };
+  }
+
+  private static extractBandcampMetadata(song: BandcampSong): ExtractedMetadata {
+    const tags: Record<string, string> = {};
+    try {
+      const { hostname, pathname } = new URL(song.path);
+      const subdomain = hostname.split('.')[0];
+      if (subdomain) tags.artist = subdomain;
+
+      const segments = pathname.split('/').filter(Boolean);
+      const track = segments[segments.length - 1];
+      if (track) tags.title = track;
+    } catch {
+      // ignore malformed URL
+    }
+    return { tags, duration: null };
+  }
+
+  private static async extractFileMetadata(
+    song: FileSong,
+    data: Buffer,
+  ): Promise<ExtractedMetadata> {
     const TagLib = await import('node-taglib-sharp');
     const dir = await mkdtemp(join(tmpdir(), 'party-player-'));
     const tmpPath = join(dir, `song${extname(song.path)}`);

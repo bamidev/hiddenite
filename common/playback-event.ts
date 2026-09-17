@@ -1,3 +1,7 @@
+import type { Song } from './song';
+
+export type { Song };
+
 export interface ExtractedMetadata {
   tags: Record<string, string>;
   duration: number | null;
@@ -17,9 +21,11 @@ export interface PausePlaybackEvent extends PlaybackEvent {
   event: 'pause';
 }
 
+export type SongInfo = Song & { metadata: ExtractedMetadata };
+
 export interface NewPlaybackEvent extends PlaybackEvent {
   event: 'new';
   queueId: string;
-  metadata: ExtractedMetadata;
+  song: SongInfo;
   elapsed: number;
 }

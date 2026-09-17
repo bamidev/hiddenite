@@ -1,32 +1,11 @@
-import { useEffect, useRef } from 'react'
-import { api } from '../api.ts'
+import type { SongInfo } from 'common'
+import DefaultPlayer from './default-player.tsx'
+import BandcampPlayer from './bandcamp-player.tsx'
 
-export default function SongPlayer({ mixSourceId, elapsedMs, playing }: { mixSourceId: string, elapsedMs: number, playing: boolean }) {
-  const audioRef = useRef<HTMLAudioElement>(null)
+export default function SongPlayer({ currentSong, mixSourceId, elapsedMs, playing }: { currentSong: SongInfo, mixSourceId: string, elapsedMs: number, playing: boolean }) {
+  if (currentSong.kind === 'bandcamp') {
+    return <BandcampPlayer url={currentSong.path} />
+  }
 
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    function onLoadedMetadata() {
-      audio!.currentTime = elapsedMs / 1000
-    }
-
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    return () => audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-  }, [])
-
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (playing) {
-      audio.play()
-    } else {
-      audio.pause()
-    }
-  }, [playing])
-
-  return (
-    <audio ref={audioRef} src={`${api.baseUrl}/mix-source/${mixSourceId}/stream`} />
-  )
+  return <DefaultPlayer mixSourceId={mixSourceId} elapsedMs={elapsedMs} playing={playing} />
 }

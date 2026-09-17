@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ExtractedMetadata, NewPlaybackEvent, PlayPlaybackEvent, PlaybackEvent } from 'common'
+import type { NewPlaybackEvent, PlayPlaybackEvent, PlaybackEvent, SongInfo } from 'common'
 import { api } from '../api.ts'
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'
@@ -13,8 +13,7 @@ export interface MixSourceData {
   name: string
   queues?: QueueData[]
   playing: boolean
-  currentSongId: string | null
-  currentSongMetadata: ExtractedMetadata | null
+  currentSong: SongInfo | null
   elapsedMs: number
 }
 
@@ -67,10 +66,9 @@ function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId:
 export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void }) {
   const queues = source.queues ?? []
   const [playing, setPlaying] = useState(source.playing)
-  const [currentSongId, setCurrentSongId] = useState(source.currentSongId)
-  const [currentSongMetadata, setCurrentSongMetadata] = useState(source.currentSongMetadata)
+  const [currentSong, setCurrentSong] = useState(source.currentSong)
   const [elapsedMs, setElapsedMs] = useState(source.elapsedMs)
-  const remaining = useRemaining(elapsedMs, currentSongMetadata?.duration ?? null, playing)
+  const remaining = useRemaining(elapsedMs, currentSong?.metadata.duration ?? null, playing)
 
   function handlePlayEvent(event: PlayPlaybackEvent) {
     setPlaying(true)
@@ -83,8 +81,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
 
   function handleNewEvent(event: NewPlaybackEvent) {
     setPlaying(true)
-    setCurrentSongId(event.songId)
-    setCurrentSongMetadata(event.metadata)
+    setCurrentSong(event.song)
     setElapsedMs(event.elapsed)
     window.dispatchEvent(new CustomEvent('queue-song-taken', { detail: { queueId: event.queueId } }))
   }
@@ -111,12 +108,13 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
       <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onTogglePlay}>
         {playing ? 'Pause' : 'Play'}
       </button>
-      {currentSongId && (
+      {currentSong && (
         <>
-          <NowPlaying tags={currentSongMetadata?.tags ?? {}} />
+          <NowPlaying tags={currentSong.metadata.tags} />
           <span>{remaining != null ? `-${formatElapsed(remaining)}` : formatElapsed(elapsedMs)}</span>
           <SongPlayer
-            key={currentSongId}
+            key={currentSong.id}
+            currentSong={currentSong}
             mixSourceId={source.id}
             elapsedMs={elapsedMs}
             playing={playing}
