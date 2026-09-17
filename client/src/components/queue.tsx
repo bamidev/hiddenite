@@ -28,8 +28,17 @@ export default function Queue({ queue }: { queue: QueueData }) {
       if (queueId === queue.id) loadSongs()
     }
 
+    function onSongTaken(event: Event) {
+      const { queueId } = (event as CustomEvent<{ queueId: string }>).detail
+      if (queueId === queue.id) loadSongs()
+    }
+
     window.addEventListener('queue-song-added', onSongAdded)
-    return () => window.removeEventListener('queue-song-added', onSongAdded)
+    window.addEventListener('queue-song-taken', onSongTaken)
+    return () => {
+      window.removeEventListener('queue-song-added', onSongAdded)
+      window.removeEventListener('queue-song-taken', onSongTaken)
+    }
   }, [queue.id])
 
   async function onToggleShuffle() {

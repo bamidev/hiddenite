@@ -43,28 +43,29 @@ export class QueuePoolMixSource implements MixSource {
   }
 
   private play(): void {
-    const isNewSong = !this.currentSong;
-    if (!this.currentSong) {
-      const song = this.takeFirstSong();
-      if (!song) return;
-      this.currentSong = song;
-      this.elapsedMs = 0;
-    }
+    if (this.currentSong) {
+      this.playing = true;
+      this.startedAt = Date.now();
+      this.scheduleAdvance();
 
-    this.playing = true;
-    this.startedAt = Date.now();
-    this.scheduleAdvance();
-
-    if (isNewSong) {
-      this.emitNew();
-    } else {
       const event: PlayPlaybackEvent = {
         event: 'play',
         songId: this.currentSong.song.id,
         elapsed: this.getElapsed(),
       };
       this.events.next(event);
+      return;
     }
+
+    const taken = this.takeFirstSong();
+    if (!taken) return;
+    this.currentSong = taken.song;
+    this.elapsedMs = 0;
+
+    this.playing = true;
+    this.startedAt = Date.now();
+    this.scheduleAdvance();
+    this.emitNew(taken.queueId);
   }
 
   private pause(): void {
@@ -81,25 +82,26 @@ export class QueuePoolMixSource implements MixSource {
   }
 
   private advance(): void {
-    const next = this.takeFirstSong();
-    this.currentSong = next;
+    const taken = this.takeFirstSong();
+    this.currentSong = taken?.song ?? null;
     this.elapsedMs = 0;
-    this.startedAt = next ? Date.now() : null;
-    this.playing = next !== null;
+    this.startedAt = taken ? Date.now() : null;
+    this.playing = taken !== null;
 
-    if (next) {
+    if (taken) {
       this.scheduleAdvance();
-      this.emitNew();
+      this.emitNew(taken.queueId);
     } else {
       this.clearTimer();
     }
   }
 
-  private emitNew(): void {
+  private emitNew(queueId: string): void {
     if (!this.currentSong) return;
     const event: NewPlaybackEvent = {
       event: 'new',
       songId: this.currentSong.song.id,
+      queueId,
       metadata: this.currentSong.metadata,
       elapsed: this.getElapsed(),
     };
@@ -128,10 +130,11 @@ export class QueuePoolMixSource implements MixSource {
     return this.elapsedMs;
   }
 
-  private takeFirstSong(): QueueSong | null {
+  private takeFirstSong(): { song: QueueSong; queueId: string } | null {
     for (const queue of this.queues) {
       if (queue.songs.length > 0) {
-        return queue.songs.shift() ?? null;
+        const song = queue.songs.shift();
+        if (song) return { song, queueId: queue.id };
       }
     }
     return null;

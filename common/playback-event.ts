@@ -19,6 +19,7 @@ export interface PausePlaybackEvent extends PlaybackEvent {
 
 export interface NewPlaybackEvent extends PlaybackEvent {
   event: 'new';
+  queueId: string;
   metadata: ExtractedMetadata;
   elapsed: number;
 }

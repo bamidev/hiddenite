@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import type { PlaybackEvent, PlayPlaybackEvent, NewPlaybackEvent } from 'common'
 import { api } from './api.ts'
 import MainBar from './components/main-bar.tsx'
 import NavBar from './components/nav-bar.tsx'
@@ -57,30 +56,6 @@ function App() {
     ))
   }
 
-  async function onTogglePlay(mixSourceId: string) {
-    const response = await api.post(`mix-source/${mixSourceId}/play`)
-    const updated: MixSourceData = await response.json()
-    setSources(s => s.map(source => source.id === mixSourceId ? updated : source))
-  }
-
-  function onPlaybackEvent(mixSourceId: string, event: PlaybackEvent) {
-    setSources(s => s.map(source => {
-      if (source.id !== mixSourceId) return source
-
-      if (event.event === 'play') {
-        return { ...source, playing: true, elapsedMs: (event as PlayPlaybackEvent).elapsed }
-      }
-      if (event.event === 'pause') {
-        return { ...source, playing: false }
-      }
-      if (event.event === 'new') {
-        const newEvent = event as NewPlaybackEvent
-        return { ...source, playing: true, currentSongId: newEvent.songId, currentSongMetadata: newEvent.metadata, elapsedMs: newEvent.elapsed }
-      }
-      return source
-    }))
-  }
-
   return (
     <>
       <NavBar />
@@ -96,8 +71,6 @@ function App() {
               onAddQueue={() => onAddQueue(source.id)}
               onRenameQueue={(queueId, name) => onRenameQueue(source.id, queueId, name)}
               onActivateQueue={queueId => { activeQueueIdRef.current = queueId }}
-              onTogglePlay={() => onTogglePlay(source.id)}
-              onPlaybackEvent={event => onPlaybackEvent(source.id, event)}
             />
           ))}
           <button type="button" className="btn btn-primary w-100" onClick={onAddMixSource}>
