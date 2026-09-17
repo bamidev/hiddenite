@@ -6,6 +6,10 @@ export {
   extractBandcampMetadata,
   extractYouTubeVideoId,
   extractYouTubeTags,
+  scrapeYouTubeDuration,
+  extractYouTubeMetadata,
+  extractFileMetadata,
+  extractFileMetadataFromBuffer,
 } from './song-metadata';
 
 export interface ExtractedMetadata {

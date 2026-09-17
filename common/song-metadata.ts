@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { ExtractedMetadata } from './playback-event';
 
 export function extractBandcampTags(url: string): Record<string, string> {
@@ -88,4 +91,60 @@ export async function extractYouTubeTags(url: string): Promise<Record<string, st
   }
 
   return tags;
+}
+
+export async function scrapeYouTubeDuration(videoId: string): Promise<number> {
+  const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch YouTube watch page for ${videoId} (status ${response.status})`,
+    );
+  }
+  const html = await response.text();
+  const match = html.match(/"lengthSeconds":"(\d+)"/);
+  if (!match) {
+    throw new Error(`Could not find video duration for YouTube video ${videoId}`);
+  }
+  return Number(match[1]) * 1000;
+}
+
+export async function extractYouTubeMetadata(url: string): Promise<ExtractedMetadata> {
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) {
+    throw new Error(`Could not extract YouTube video ID from URL: ${url}`);
+  }
+
+  const tags = await extractYouTubeTags(url);
+  const duration = await scrapeYouTubeDuration(videoId);
+
+  return { tags, duration };
+}
+
+export async function extractFileMetadata(filePath: string): Promise<ExtractedMetadata> {
+  const TagLib = await import('node-taglib-sharp');
+  const file = TagLib.File.createFromPath(filePath);
+  try {
+    const tags: Record<string, string> = {};
+    if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer;
+    if (file.tag.album) tags.album = file.tag.album;
+    if (file.tag.title) tags.title = file.tag.title;
+    const duration = file.properties.durationMilliseconds || null;
+    return { tags, duration };
+  } finally {
+    file.dispose();
+  }
+}
+
+export async function extractFileMetadataFromBuffer(
+  data: Buffer,
+  extension: string,
+): Promise<ExtractedMetadata> {
+  const dir = await mkdtemp(join(tmpdir(), 'party-player-'));
+  const tmpPath = join(dir, `song${extension}`);
+  try {
+    await writeFile(tmpPath, data);
+    return await extractFileMetadata(tmpPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }

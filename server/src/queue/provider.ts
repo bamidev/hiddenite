@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, extname } from 'node:path';
+import { extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
-import { extractBandcampMetadata, extractYouTubeTags, extractYouTubeVideoId } from 'common';
+import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'common';
 import type { ExtractedMetadata, Song } from 'common';
 
 export class QueueSong {
@@ -31,68 +29,14 @@ export class QueueSong {
     }
 
     if (song instanceof YouTubeSong) {
-      return QueueSong.extractYouTubeMetadata(song);
+      return extractYouTubeMetadata(song.path);
     }
 
     if (song instanceof FileSong && data) {
-      return QueueSong.extractFileMetadata(song, data);
+      return extractFileMetadataFromBuffer(data, extname(song.path));
     }
 
     return { tags: {}, duration: null };
-  }
-
-  private static async extractYouTubeMetadata(
-    song: YouTubeSong,
-  ): Promise<ExtractedMetadata> {
-    const videoId = extractYouTubeVideoId(song.path);
-    if (!videoId) {
-      throw new Error(`Could not extract YouTube video ID from URL: ${song.path}`);
-    }
-
-    const tags = await extractYouTubeTags(song.path);
-    const duration = await QueueSong.scrapeYouTubeDuration(videoId);
-
-    return { tags, duration };
-  }
-
-  private static async scrapeYouTubeDuration(videoId: string): Promise<number> {
-    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch YouTube watch page for ${videoId} (status ${response.status})`,
-      );
-    }
-    const html = await response.text();
-    const match = html.match(/"lengthSeconds":"(\d+)"/);
-    if (!match) {
-      throw new Error(`Could not find video duration for YouTube video ${videoId}`);
-    }
-    return Number(match[1]) * 1000;
-  }
-
-  private static async extractFileMetadata(
-    song: FileSong,
-    data: Buffer,
-  ): Promise<ExtractedMetadata> {
-    const TagLib = await import('node-taglib-sharp');
-    const dir = await mkdtemp(join(tmpdir(), 'party-player-'));
-    const tmpPath = join(dir, `song${extname(song.path)}`);
-    try {
-      await writeFile(tmpPath, data);
-      const file = TagLib.File.createFromPath(tmpPath);
-      try {
-        const tags: Record<string, string> = {};
-        if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer;
-        if (file.tag.album) tags.album = file.tag.album;
-        if (file.tag.title) tags.title = file.tag.title;
-        const duration = file.properties.durationMilliseconds || null;
-        return { tags, duration };
-      } finally {
-        file.dispose();
-      }
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
   }
 
   toJSON() {
