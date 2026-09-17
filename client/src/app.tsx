@@ -75,7 +75,7 @@ function App() {
       }
       if (event.event === 'new') {
         const newEvent = event as NewPlaybackEvent
-        return { ...source, playing: true, currentSongId: newEvent.songId, elapsedMs: newEvent.elapsed }
+        return { ...source, playing: true, currentSongId: newEvent.songId, currentSongMetadata: newEvent.metadata, elapsedMs: newEvent.elapsed }
       }
       return source
     }))

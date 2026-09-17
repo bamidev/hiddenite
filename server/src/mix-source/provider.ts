@@ -144,6 +144,7 @@ export class QueuePoolMixSource implements MixSource {
       queues: this.queues,
       playing: this.playing,
       currentSongId: this.currentSong?.song.id ?? null,
+      currentSongMetadata: this.currentSong?.metadata ?? null,
       elapsedMs: this.getElapsed(),
     };
   }
