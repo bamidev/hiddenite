@@ -79,14 +79,16 @@ function App() {
             Add mix source
           </button>
         </div>
-        <CollapsibleSection id="remote-library-section" title="Remote library">
-          <RemoteLibrary />
-        </CollapsibleSection>
-        {window.electron?.isElectron && (
-          <CollapsibleSection id="local-library-section" title="Local library">
-            <Library activeQueueIdRef={activeQueueIdRef} />
+        <div className="accordion" id="library-accordion">
+          <CollapsibleSection id="remote-library-section" title="Remote library">
+            <RemoteLibrary />
           </CollapsibleSection>
-        )}
+          {window.electron?.isElectron && (
+            <CollapsibleSection id="local-library-section" title="Local library">
+              <Library activeQueueIdRef={activeQueueIdRef} />
+            </CollapsibleSection>
+          )}
+        </div>
       </section>
     </>
   )
