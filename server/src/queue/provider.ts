@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
-import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'common';
-import type { ExtractedMetadata, Song } from 'common';
+import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'hiddenite';
+import type { ExtractedMetadata, Song } from 'hiddenite';
 
 export class QueueSong {
   song: Song;
@@ -15,9 +15,12 @@ export class QueueSong {
     this.metadata = metadata;
   }
 
-  static async create(song: Song, data?: Buffer): Promise<QueueSong> {
-    const metadata = await QueueSong.extractMetadata(song, data);
-    return new QueueSong(song, data, metadata);
+  static async create(
+    song: Song,
+    data?: Buffer,
+    metadata?: ExtractedMetadata,
+  ): Promise<QueueSong> {
+    return new QueueSong(song, data, metadata ?? await QueueSong.extractMetadata(song, data));
   }
 
   private static async extractMetadata(

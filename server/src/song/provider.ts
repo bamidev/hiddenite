@@ -1,4 +1,4 @@
-import type { Song } from 'common';
+import type { Song } from 'hiddenite';
 
 export class FileSong implements Song {
   readonly kind = 'file';

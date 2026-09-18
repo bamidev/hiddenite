@@ -5,7 +5,7 @@ import type {
   PlayPlaybackEvent,
   PausePlaybackEvent,
   NewPlaybackEvent,
-} from 'common';
+} from 'hiddenite';
 
 export interface MixSource {
   id: string;

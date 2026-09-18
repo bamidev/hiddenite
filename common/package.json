@@ -1,5 +1,5 @@
 {
-  "name": "common",
+  "name": "hiddenite",
   "version": "0.0.0",
   "private": true,
   "main": "dist/playback-event.js",

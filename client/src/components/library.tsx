@@ -10,6 +10,7 @@ export interface LibrarySongData {
   id: string
   path: string
   type: string
+  duration: number | null
   tags: Record<string, string>
 }
 
@@ -39,6 +40,8 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
       formData.append('file', new Blob([data]), song.path.split('/').pop())
     } else {
       formData.append('url', song.path)
+      formData.append('tags', JSON.stringify(song.tags))
+      if (song.duration != null) formData.append('duration', String(song.duration))
     }
     await api.put(`queue/${queueId}/song`, formData)
     window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId } }))

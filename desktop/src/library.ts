@@ -3,7 +3,7 @@ import { app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
-import { extractBandcampMetadata, extractYouTubeTags, extractFileMetadata } from 'common'
+import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite'
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
@@ -14,7 +14,8 @@ function getDatabase() {
     CREATE TABLE IF NOT EXISTS song (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path TEXT NOT NULL UNIQUE,
-      type TEXT NOT NULL
+      type TEXT NOT NULL,
+      duration INTEGER
     )
   `)
   db.exec(`
@@ -49,12 +50,12 @@ export async function rescanLibrary(): Promise<number> {
 
   db.exec('DELETE FROM tag')
   db.exec('DELETE FROM song')
-  const insertSong = db.prepare('INSERT INTO song (path, type) VALUES (?, ?)')
+  const insertSong = db.prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
 
   for (const filePath of files) {
-    const { tags } = await extractFileMetadata(filePath)
-    const { lastInsertRowid: songId } = insertSong.run(filePath, 'file')
+    const { tags, duration } = await extractFileMetadata(filePath)
+    const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration)
     for (const [key, value] of Object.entries(tags)) {
       insertTag.run(songId as number, key, value)
     }
@@ -89,14 +90,14 @@ export async function writeTag(filePath: string, key: string, value: string): Pr
 }
 
 export async function addUrlSong(kind: string, url: string): Promise<void> {
-  const tags = kind === 'bandcamp' ? (await extractBandcampMetadata(url)).tags
-    : kind === 'youtube' ? await extractYouTubeTags(url)
-    : {}
+  const { tags, duration } = kind === 'bandcamp' ? await extractBandcampMetadata(url)
+    : kind === 'youtube' ? await extractYouTubeMetadata(url)
+    : { tags: {}, duration: null }
 
   const db = getDatabase()
   const { lastInsertRowid: songId } = db
-    .prepare('INSERT INTO song (path, type) VALUES (?, ?)')
-    .run(url, kind)
+    .prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
+    .run(url, kind, duration)
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
   for (const [key, value] of Object.entries(tags)) {
     insertTag.run(songId as number, key, value)
@@ -105,12 +106,11 @@ export async function addUrlSong(kind: string, url: string): Promise<void> {
 }
 
 export async function addFileSong(filePath: string): Promise<void> {
-  const TagLib = await import('node-taglib-sharp')
-  const tags = readTags(TagLib, filePath)
+  const { tags, duration } = await extractFileMetadata(filePath)
   const db = getDatabase()
   const { lastInsertRowid: songId } = db
-    .prepare('INSERT INTO song (path, type) VALUES (?, ?)')
-    .run(filePath, 'file')
+    .prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
+    .run(filePath, 'file', duration)
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
   for (const [key, value] of Object.entries(tags)) {
     insertTag.run(songId as number, key, value)
@@ -120,7 +120,7 @@ export async function addFileSong(filePath: string): Promise<void> {
 
 export function listSongs() {
   const db = getDatabase()
-  const songs = db.prepare('SELECT id, path, type FROM song').all() as { id: number, path: string, type: string }[]
+  const songs = db.prepare('SELECT id, path, type, duration FROM song').all() as { id: number, path: string, type: string, duration: number | null }[]
   const tagRows = db.prepare('SELECT song_id, key, value FROM tag').all() as { song_id: number, key: string, value: string }[]
   db.close()
 
@@ -134,6 +134,7 @@ export function listSongs() {
     id: String(song.id),
     path: song.path,
     type: song.type,
+    duration: song.duration,
     tags: tagsBySongId.get(song.id) ?? {},
   }))
 }

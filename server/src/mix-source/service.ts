@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 import { MixSource, QueuePoolMixSource } from './provider';
 import { QueueService } from '../queue/service';
 import type { Queue, QueueSong } from '../queue/provider';
-import type { PlaybackEvent } from 'common';
+import type { PlaybackEvent } from 'hiddenite';
 
 @Injectable()
 export class MixSourceService {

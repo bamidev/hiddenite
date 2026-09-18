@@ -1,4 +1,4 @@
-import type { SongInfo } from 'common'
+import type { SongInfo } from 'hiddenite'
 import DefaultPlayer from './default-player.tsx'
 import BandcampPlayer from './bandcamp-player.tsx'
 import YouTubePlayer from './youtube-player.tsx'

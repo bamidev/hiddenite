@@ -17,7 +17,7 @@ import { extname } from 'node:path';
 import type { MixSource } from './provider';
 import { MixSourceService } from './service';
 import type { Queue } from '../queue/provider';
-import type { PlaybackEvent } from 'common';
+import type { PlaybackEvent } from 'hiddenite';
 
 const MIME_TYPES: Record<string, string> = {
   '.mp3': 'audio/mpeg',

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { NewPlaybackEvent, PlayPlaybackEvent, PlaybackEvent, SongInfo } from 'common'
+import type { NewPlaybackEvent, PlayPlaybackEvent, PlaybackEvent, SongInfo } from 'hiddenite'
 import { api } from '../api.ts'
 import CloseButton from './common/close-button.tsx'
 import AddButton from './common/add-button.tsx'

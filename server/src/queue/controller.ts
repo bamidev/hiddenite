@@ -34,10 +34,16 @@ export class QueueController {
     @UploadedFile() file: Express.Multer.File,
     @Body('kind') kind: string,
     @Body('url') url: string,
+    @Body('tags') tagsJson: string,
+    @Body('duration') duration: string,
   ): Promise<Queue> {
+    const metadata = tagsJson
+      ? { tags: JSON.parse(tagsJson), duration: duration ? Number(duration) : null }
+      : undefined;
+
     if (file) {
       const song = new FileSong(randomUUID(), file.originalname);
-      const queueSong = await QueueSong.create(song, file.buffer);
+      const queueSong = await QueueSong.create(song, file.buffer, metadata);
       return this.service.addSong(id, queueSong);
     }
 
@@ -46,7 +52,7 @@ export class QueueController {
       throw new BadRequestException(`Unsupported song kind: ${kind}`);
     }
     const song = new SongClass(randomUUID(), url);
-    const queueSong = await QueueSong.create(song);
+    const queueSong = await QueueSong.create(song, undefined, metadata);
     return this.service.addSong(id, queueSong);
   }
 
