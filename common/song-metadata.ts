@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ExtractedMetadata } from './playback-event';
+import { APP_NAME } from './main';
 
 export function extractBandcampTags(url: string): Record<string, string> {
   const tags: Record<string, string> = {};
@@ -139,7 +140,7 @@ export async function extractFileMetadataFromBuffer(
   data: Buffer,
   extension: string,
 ): Promise<ExtractedMetadata> {
-  const dir = await mkdtemp(join(tmpdir(), 'party-player-'));
+  const dir = await mkdtemp(join(tmpdir(), `${APP_NAME}-`));
   const tmpPath = join(dir, `song${extension}`);
   try {
     await writeFile(tmpPath, data);
