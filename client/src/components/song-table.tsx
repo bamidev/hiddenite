@@ -4,12 +4,21 @@ import type { ReactNode } from 'react'
 export interface SongData {
   id: string
   tags: Record<string, string>
+  duration?: number | null
 }
 
-const COLUMNS = ['artist', 'album', 'title', 'rating']
+const TAG_COLUMNS = ['artist', 'album', 'title', 'rating']
 const PAGE_SIZE = 10000
 const SIBLING_COUNT = 1
 const SEARCH_THRESHOLD = 20
+
+function formatDuration(duration: number | null | undefined): string {
+  if (duration == null) return ''
+  const totalSeconds = Math.round(duration / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
 
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   const keep = new Set<number>()
@@ -63,18 +72,20 @@ export default function SongTable<T extends SongData>({ songs, renderActions }: 
         <table className="table table-striped">
           <thead>
             <tr>
-              {COLUMNS.map(key => (
+              {TAG_COLUMNS.map(key => (
                 <th key={key} className="text-capitalize">{key}</th>
               ))}
+              <th>Duration</th>
               {renderActions && <th></th>}
             </tr>
           </thead>
           <tbody>
             {pageSongs.map(song => (
               <tr key={song.id} className="library-row">
-                {COLUMNS.map(key => (
+                {TAG_COLUMNS.map(key => (
                   <td key={key}>{song.tags[key] ?? ''}</td>
                 ))}
+                <td>{formatDuration(song.duration)}</td>
                 {renderActions && (
                   <td className="library-row-actions">
                     {renderActions(song)}
