@@ -1,8 +1,8 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { ExtractedMetadata } from './playback-event';
-import { APP_NAME } from './main';
+import type { ExtractedMetadata } from './playback-event.js';
+import { APP_NAME } from './main.js';
 
 export function extractBandcampTags(url: string): Record<string, string> {
   const tags: Record<string, string> = {};

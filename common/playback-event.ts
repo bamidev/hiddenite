@@ -1,4 +1,4 @@
-import type { Song } from './song';
+import type { Song } from './song.js';
 
 export type { Song };
 export {
@@ -10,7 +10,7 @@ export {
   extractYouTubeMetadata,
   extractFileMetadata,
   extractFileMetadataFromBuffer,
-} from './song-metadata';
+} from './song-metadata.js';
 
 export interface ExtractedMetadata {
   tags: Record<string, string>;

@@ -3,7 +3,7 @@ import { app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
-import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite'
+import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 

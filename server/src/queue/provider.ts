@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
-import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'hiddenite';
+import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'hiddenite/playback-event';
 import type { ExtractedMetadata, Song } from 'hiddenite';
 
 export class QueueSong {
