@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { APP_NAME } from 'hiddenite'
-import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong } from 'hiddenite/library'
+import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong } from 'hiddenite/library'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
 const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
@@ -66,4 +66,8 @@ export async function addFileSong(filePath: string): Promise<void> {
 
 export function listSongs() {
   return listLibrarySongs(DB_PATH)
+}
+
+export function removeSong(id: string): void {
+  removeLibrarySong(DB_PATH, id)
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import AddButton from './common/add-button.tsx'
+import RemoveButton from './common/remove-button.tsx'
 import SongTable, { type SongData } from './song-table.tsx'
 import { showToast } from '../error.ts'
 
@@ -29,11 +30,21 @@ export default function RemoteLibrary({ activeQueueIdRef }: { activeQueueIdRef: 
     window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId } }))
   }
 
+  async function onRemoveSong(song: SongData) {
+    await api.delete(`library/song/${song.id}`)
+    loadSongs()
+  }
+
   return (
     <div className="library">
       <SongTable
         songs={songs}
-        renderActions={song => <AddButton onClick={() => onQueueSong(song)} />}
+        renderActions={song => (
+          <>
+            <AddButton onClick={() => onQueueSong(song)} />
+            <RemoveButton onClick={() => onRemoveSong(song)} />
+          </>
+        )}
         addDialogId="add-remote-library-song-modal"
         onAddUrl={async (kind, url) => {
           await api.put('library/song/url', { kind, url })

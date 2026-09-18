@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong } from 'hiddenite/library';
+import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong } from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
 import { config } from '../config';
@@ -24,5 +24,9 @@ export class LibraryService {
       : { tags: {}, duration: null };
 
     return addUrlSong(config.database.path, kind, url, metadata);
+  }
+
+  removeSong(id: string): void {
+    removeLibrarySong(config.database.path, id);
   }
 }

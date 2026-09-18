@@ -66,6 +66,13 @@ export default class Api {
   post(path: string = '', body?: unknown) {
     return this._fetch('POST', path, body);
   }
+
+  /**
+   * Perform a DELETE request.
+   */
+  delete(path: string = '', body?: unknown) {
+    return this._fetch('DELETE', path, body);
+  }
 }
 
 export const api = new Api('http://localhost:3000');

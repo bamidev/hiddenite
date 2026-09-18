@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import AddButton from './common/add-button.tsx'
+import RemoveButton from './common/remove-button.tsx'
 import SongTable from './song-table.tsx'
 import { showToast } from '../error.ts'
 
@@ -46,11 +47,21 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
     window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId } }))
   }
 
+  async function onRemoveSong(song: LibrarySongData) {
+    await window.electron?.removeSong(song.id)
+    loadSongs()
+  }
+
   return (
     <div className="library">
       <SongTable
         songs={songs}
-        renderActions={song => <AddButton onClick={() => onQueueSong(song)} />}
+        renderActions={song => (
+          <>
+            <AddButton onClick={() => onQueueSong(song)} />
+            <RemoveButton onClick={() => onRemoveSong(song)} />
+          </>
+        )}
         addDialogId="add-library-song-modal"
         onAddFile={async file => {
           const path = (file as File & { path: string }).path

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { LibraryService } from './service';
 
 const URL_SONG_KINDS = new Set(['bandcamp', 'youtube']);
@@ -20,6 +20,11 @@ export class LibraryController {
       throw new BadRequestException(`Unsupported song kind: ${kind}`);
     }
     return this.service.addSongByUrl(kind, url);
+  }
+
+  @Delete('song/:id')
+  removeSong(@Param('id') id: string) {
+    this.service.removeSong(id);
   }
 
   @Post('rescan')

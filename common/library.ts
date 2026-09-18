@@ -119,6 +119,16 @@ export function addUrlSong(dbPath: string, kind: string, url: string, metadata: 
   return { id: String(songId), path: url, kind, duration, tags };
 }
 
+export function removeLibrarySong(dbPath: string, id: string): void {
+  const db = openLibraryDatabase(dbPath);
+  try {
+    db.prepare('DELETE FROM tag WHERE song_id = ?').run(Number(id));
+    db.prepare('DELETE FROM song WHERE id = ?').run(Number(id));
+  } finally {
+    db.close();
+  }
+}
+
 export function getLibrarySong(dbPath: string, id: string): LibrarySong | null {
   const db = openLibraryDatabase(dbPath);
   let song: { id: number, path: string, kind: string, duration: number | null } | undefined;
