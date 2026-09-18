@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { app } from 'electron'
 import fs from 'node:fs/promises'
+import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
@@ -8,7 +9,8 @@ import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
 
 function getDatabase() {
-  const dbPath = path.join(app.getPath('userData'), 'pp.sqlite')
+  const dbPath = path.join(app.getPath('userData'), 'library.sqlite')
+  mkdirSync(path.dirname(dbPath), { recursive: true })
   const db = new DatabaseSync(dbPath)
   db.exec(`
     CREATE TABLE IF NOT EXISTS song (
