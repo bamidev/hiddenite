@@ -1,16 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { QueueSong } from '../queue/provider';
+import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong } from 'hiddenite/library';
+import type { LibrarySong } from 'hiddenite/library';
+import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
+import { config } from '../config';
 
 @Injectable()
 export class LibraryService {
-  private readonly songs: QueueSong[] = [];
-
-  addSong(song: QueueSong): QueueSong {
-    this.songs.push(song);
-    return song;
+  rescan(): Promise<number> {
+    return rescanLibrary(config.database.path, config.library.paths);
   }
 
-  listSongs() {
-    return this.songs.map((entry) => entry.toJSON());
+  listSongs(): LibrarySong[] {
+    return listLibrarySongs(config.database.path);
+  }
+
+  findSong(id: string): LibrarySong | null {
+    return getLibrarySong(config.database.path, id);
+  }
+
+  async addSongByUrl(kind: string, url: string): Promise<LibrarySong> {
+    const metadata = kind === 'bandcamp' ? await extractBandcampMetadata(url)
+      : kind === 'youtube' ? await extractYouTubeMetadata(url)
+      : { tags: {}, duration: null };
+
+    return addUrlSong(config.database.path, kind, url, metadata);
   }
 }

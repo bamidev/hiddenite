@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -11,9 +12,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { randomUUID } from 'node:crypto';
+import { getLibrarySong } from 'hiddenite/library';
 import type { Queue } from './provider';
 import { QueueSong } from './provider';
 import { QueueService } from './service';
+import { config } from '../config';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
 
 const URL_SONG_KINDS = {
@@ -68,6 +71,32 @@ export class QueueController {
     }
     const song = new SongClass(randomUUID(), url);
     const queueSong = await QueueSong.create(song);
+    return this.service.addSong(id, queueSong);
+  }
+
+  @Put(':id/song/library')
+  async addSongFromLibrary(
+    @Param('id') id: string,
+    @Body('songId') songId: string,
+  ): Promise<Queue> {
+    const librarySong = getLibrarySong(config.database.path, songId);
+    if (!librarySong) {
+      throw new NotFoundException(`Library song ${songId} not found`);
+    }
+    const metadata = { tags: librarySong.tags, duration: librarySong.duration };
+
+    if (librarySong.kind === 'file') {
+      const song = new FileSong(randomUUID(), librarySong.path);
+      const queueSong = await QueueSong.create(song, undefined, metadata);
+      return this.service.addSong(id, queueSong);
+    }
+
+    const SongClass = URL_SONG_KINDS[librarySong.kind as keyof typeof URL_SONG_KINDS];
+    if (!SongClass) {
+      throw new BadRequestException(`Unsupported library song kind: ${librarySong.kind}`);
+    }
+    const song = new SongClass(randomUUID(), librarySong.path);
+    const queueSong = await QueueSong.create(song, undefined, metadata);
     return this.service.addSong(id, queueSong);
   }
 

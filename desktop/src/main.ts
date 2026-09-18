@@ -1,11 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { APP_NAME } from 'hiddenite'
 import { rescanLibrary, listSongs, addUrlSong, addFileSong } from './library'
-
-const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
-app.setPath('userData', path.join(xdgDataHome, APP_NAME))
 
 let win: BrowserWindow
 

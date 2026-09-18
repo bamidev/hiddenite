@@ -1,72 +1,22 @@
-import { DatabaseSync } from 'node:sqlite'
 import { app } from 'electron'
-import fs from 'node:fs/promises'
-import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import { APP_NAME } from 'hiddenite'
+import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong } from 'hiddenite/library'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
-const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac'])
+const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
+app.setPath('userData', path.join(xdgDataHome, APP_NAME))
 
-function getDatabase() {
-  const dbPath = path.join(app.getPath('userData'), 'library.sqlite')
-  mkdirSync(path.dirname(dbPath), { recursive: true })
-  const db = new DatabaseSync(dbPath)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS song (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      path TEXT NOT NULL UNIQUE,
-      type TEXT NOT NULL,
-      duration INTEGER
-    )
-  `)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS tag (
-      song_id INTEGER NOT NULL REFERENCES song (id),
-      key TEXT NOT NULL,
-      value TEXT NOT NULL,
-      PRIMARY KEY (song_id, key)
-    )
-  `)
-  return db
+function getDbPath(): string {
+  return path.join(app.getPath('userData'), 'library.sqlite')
 }
 
-async function findAudioFiles(dir: string): Promise<string[]> {
-  const entries = await fs.readdir(dir, { withFileTypes: true })
-  const files: string[] = []
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...await findAudioFiles(fullPath))
-    } else if (AUDIO_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
-      files.push(fullPath)
-    }
-  }
-  return files
-}
+const DB_PATH: string = getDbPath()
 
 export async function rescanLibrary(): Promise<number> {
   const musicDir = path.join(os.homedir(), 'Music')
-  const files = await findAudioFiles(musicDir)
-  const db = getDatabase()
-
-  db.exec('DELETE FROM tag')
-  db.exec('DELETE FROM song')
-  const insertSong = db.prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
-  const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
-
-  for (const filePath of files) {
-    const { tags, duration } = await extractFileMetadata(filePath)
-    const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration)
-    for (const [key, value] of Object.entries(tags)) {
-      insertTag.run(songId as number, key, value)
-    }
-
-    console.log(`Indexed file ${filePath}.`)
-  }
-
-  db.close()
-  return files.length
+  return scanLibrary(DB_PATH, [musicDir])
 }
 
 const WRITABLE_TAG_KEYS: Record<string, (tag: any, value: string) => void> = {
@@ -92,26 +42,18 @@ export async function writeTag(filePath: string, key: string, value: string): Pr
 }
 
 export async function addUrlSong(kind: string, url: string): Promise<void> {
-  const { tags, duration } = kind === 'bandcamp' ? await extractBandcampMetadata(url)
+  const metadata = kind === 'bandcamp' ? await extractBandcampMetadata(url)
     : kind === 'youtube' ? await extractYouTubeMetadata(url)
     : { tags: {}, duration: null }
 
-  const db = getDatabase()
-  const { lastInsertRowid: songId } = db
-    .prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
-    .run(url, kind, duration)
-  const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
-  for (const [key, value] of Object.entries(tags)) {
-    insertTag.run(songId as number, key, value)
-  }
-  db.close()
+  addLibraryUrlSong(DB_PATH, kind, url, metadata)
 }
 
 export async function addFileSong(filePath: string): Promise<void> {
   const { tags, duration } = await extractFileMetadata(filePath)
-  const db = getDatabase()
+  const db = openLibraryDatabase(DB_PATH)
   const { lastInsertRowid: songId } = db
-    .prepare('INSERT INTO song (path, type, duration) VALUES (?, ?, ?)')
+    .prepare('INSERT INTO song (path, kind, duration) VALUES (?, ?, ?)')
     .run(filePath, 'file', duration)
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
   for (const [key, value] of Object.entries(tags)) {
@@ -121,22 +63,5 @@ export async function addFileSong(filePath: string): Promise<void> {
 }
 
 export function listSongs() {
-  const db = getDatabase()
-  const songs = db.prepare('SELECT id, path, type, duration FROM song').all() as { id: number, path: string, type: string, duration: number | null }[]
-  const tagRows = db.prepare('SELECT song_id, key, value FROM tag').all() as { song_id: number, key: string, value: string }[]
-  db.close()
-
-  const tagsBySongId = new Map<number, Record<string, string>>()
-  for (const row of tagRows) {
-    if (!tagsBySongId.has(row.song_id)) tagsBySongId.set(row.song_id, {})
-    tagsBySongId.get(row.song_id)![row.key] = row.value
-  }
-
-  return songs.map(song => ({
-    id: String(song.id),
-    path: song.path,
-    type: song.type,
-    duration: song.duration,
-    tags: tagsBySongId.get(song.id) ?? {},
-  }))
+  return listLibrarySongs(DB_PATH)
 }

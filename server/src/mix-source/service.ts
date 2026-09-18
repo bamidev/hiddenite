@@ -45,14 +45,14 @@ export class MixSourceService {
     return source;
   }
 
-  togglePlay(mixSourceId: string): MixSource {
+  async togglePlay(mixSourceId: string): Promise<MixSource> {
     const source = this.findOne(mixSourceId);
     if (!(source instanceof QueuePoolMixSource)) {
       throw new NotFoundException(
         `Mix source ${mixSourceId} does not support playback`,
       );
     }
-    source.togglePlay();
+    await source.togglePlay();
     return source;
   }
 

@@ -81,7 +81,7 @@ function App() {
         </div>
         <div className="accordion" id="library-accordion">
           <CollapsibleSection id="remote-library-section" title="Remote library">
-            <RemoteLibrary />
+            <RemoteLibrary activeQueueIdRef={activeQueueIdRef} />
           </CollapsibleSection>
           {window.electron?.isElectron && (
             <CollapsibleSection id="local-library-section" title="Local library">

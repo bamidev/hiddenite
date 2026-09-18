@@ -1,5 +1,7 @@
 import { Subject } from 'rxjs';
+import { readFile } from 'node:fs/promises';
 import { Queue, QueueSong } from '../queue/provider';
+import { FileSong } from '../song/provider';
 import type {
   PlaybackEvent,
   PlayPlaybackEvent,
@@ -34,15 +36,15 @@ export class QueuePoolMixSource implements MixSource {
     this.timer = null;
   }
 
-  togglePlay(): void {
+  async togglePlay(): Promise<void> {
     if (this.playing) {
       this.pause();
     } else {
-      this.play();
+      await this.play();
     }
   }
 
-  private play(): void {
+  private async play(): Promise<void> {
     if (this.currentSong) {
       this.playing = true;
       this.startedAt = Date.now();
@@ -59,6 +61,9 @@ export class QueuePoolMixSource implements MixSource {
 
     const taken = this.takeFirstSong();
     if (!taken) return;
+    if (taken.song.data === undefined && taken.song.song instanceof FileSong) {
+      taken.song.data = await readFile(taken.song.song.path);
+    }
     this.currentSong = taken.song;
     this.elapsedMs = 0;
 
@@ -81,8 +86,11 @@ export class QueuePoolMixSource implements MixSource {
     this.events.next(event);
   }
 
-  private advance(): void {
+  private async advance(): Promise<void> {
     const taken = this.takeFirstSong();
+    if (taken && taken.song.data === undefined && taken.song.song instanceof FileSong) {
+      taken.song.data = await readFile(taken.song.song.path);
+    }
     this.currentSong = taken?.song ?? null;
     this.elapsedMs = 0;
     this.startedAt = taken ? Date.now() : null;

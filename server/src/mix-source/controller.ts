@@ -59,7 +59,7 @@ export class MixSourceController {
   }
 
   @Post(':id/play')
-  togglePlay(@Param('id') id: string): MixSource {
+  togglePlay(@Param('id') id: string): Promise<MixSource> {
     return this.service.togglePlay(id);
   }
 

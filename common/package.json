@@ -13,6 +13,10 @@
     "./playback-event": {
       "types": "./dist/playback-event.d.ts",
       "default": "./dist/playback-event.js"
+    },
+    "./library": {
+      "types": "./dist/library.d.ts",
+      "default": "./dist/library.js"
     }
   },
   "scripts": {

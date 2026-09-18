@@ -9,7 +9,7 @@ import AddSongDialog from './add-song-dialog.tsx'
 export interface LibrarySongData {
   id: string
   path: string
-  type: string
+  kind: string
   duration: number | null
   tags: Record<string, string>
 }
@@ -34,8 +34,8 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
     }
 
     const formData = new FormData()
-    formData.append('kind', song.type)
-    if (song.type === 'file') {
+    formData.append('kind', song.kind)
+    if (song.kind === 'file') {
       const data = await window.electron.readFile(song.path)
       formData.append('file', new Blob([data]), song.path.split('/').pop())
     } else {
