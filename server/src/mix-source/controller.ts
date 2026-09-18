@@ -86,6 +86,7 @@ export class MixSourceController {
         'Content-Type': mimeType,
         'Content-Length': data.length,
         'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-store',
       });
       response.status(200).send(data);
       return;
@@ -101,6 +102,7 @@ export class MixSourceController {
       'Content-Length': chunk.length,
       'Content-Range': `bytes ${start}-${end}/${data.length}`,
       'Accept-Ranges': 'bytes',
+      'Cache-Control': 'no-store',
     });
     response.status(206).send(chunk);
   }

@@ -68,6 +68,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
   const [playing, setPlaying] = useState(source.playing)
   const [currentSong, setCurrentSong] = useState(source.currentSong)
   const [elapsedMs, setElapsedMs] = useState(source.elapsedMs)
+  const [songLoadedAt, setSongLoadedAt] = useState(() => Date.now())
   const remaining = useRemaining(elapsedMs, currentSong?.metadata.duration ?? null, playing)
 
   function handlePlayEvent(event: PlayPlaybackEvent) {
@@ -83,6 +84,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
     setPlaying(true)
     setCurrentSong(event.song)
     setElapsedMs(event.elapsed)
+    setSongLoadedAt(Date.now())
     window.dispatchEvent(new CustomEvent('queue-song-taken', { detail: { queueId: event.queueId } }))
   }
 
@@ -118,6 +120,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
             mixSourceId={source.id}
             elapsedMs={elapsedMs}
             playing={playing}
+            cacheBuster={songLoadedAt}
           />
         </>
       )}

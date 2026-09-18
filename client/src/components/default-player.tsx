@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { api } from '../api.ts'
 import { showToast } from '../error.ts'
 
-export default function DefaultPlayer({ mixSourceId, elapsedMs, playing }: { mixSourceId: string, elapsedMs: number, playing: boolean }) {
+export default function DefaultPlayer({ mixSourceId, elapsedMs, playing, cacheBuster }: { mixSourceId: string, elapsedMs: number, playing: boolean, cacheBuster: number }) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
@@ -39,6 +39,6 @@ export default function DefaultPlayer({ mixSourceId, elapsedMs, playing }: { mix
   }, [playing])
 
   return (
-    <audio ref={audioRef} src={`${api.baseUrl}/mix-source/${mixSourceId}/stream`} />
+    <audio ref={audioRef} src={`${api.baseUrl}/mix-source/${mixSourceId}/stream?t=${cacheBuster}`} />
   )
 }
