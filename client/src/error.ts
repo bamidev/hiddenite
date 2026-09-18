@@ -63,3 +63,4 @@ export function showToast(id: string): void {
 
 
 loadToast('no-active-queue', 'error', 'There is no active queue')
+loadToast('autoplay-blocked', 'warning', 'Unable to auto-start audio. Click anywhere.')

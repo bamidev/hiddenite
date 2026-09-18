@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { api } from '../api.ts'
+import { showToast } from '../error.ts'
 
 export default function DefaultPlayer({ mixSourceId, elapsedMs, playing }: { mixSourceId: string, elapsedMs: number, playing: boolean }) {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -19,11 +20,22 @@ export default function DefaultPlayer({ mixSourceId, elapsedMs, playing }: { mix
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    if (playing) {
-      audio.play()
-    } else {
+
+    if (!playing) {
       audio.pause()
+      return
     }
+
+    function retry() {
+      audio!.play().catch(() => {})
+    }
+
+    audio.play().catch(() => {
+      showToast('autoplay-blocked')
+      document.addEventListener('click', retry, { once: true })
+    })
+
+    return () => document.removeEventListener('click', retry)
   }, [playing])
 
   return (
