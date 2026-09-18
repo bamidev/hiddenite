@@ -1,5 +1,4 @@
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as songMetadata from './song-metadata.js';
@@ -16,7 +15,6 @@ export interface LibrarySong {
 }
 
 export function openLibraryDatabase(dbPath: string): DatabaseSync {
-  mkdirSync(path.dirname(dbPath), { recursive: true });
   const db = new DatabaseSync(dbPath);
   db.exec(`
     CREATE TABLE IF NOT EXISTS song (

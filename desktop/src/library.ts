@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { APP_NAME } from 'hiddenite'
@@ -13,6 +14,7 @@ function getDbPath(): string {
 }
 
 const DB_PATH: string = getDbPath()
+mkdirSync(path.dirname(DB_PATH), { recursive: true })
 
 export async function rescanLibrary(): Promise<number> {
   const musicDir = path.join(os.homedir(), 'Music')
