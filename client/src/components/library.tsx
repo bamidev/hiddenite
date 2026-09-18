@@ -4,7 +4,6 @@ import { api } from '../api.ts'
 import AddButton from './common/add-button.tsx'
 import SongTable from './song-table.tsx'
 import { showToast } from '../error.ts'
-import AddSongDialog from './add-song-dialog.tsx'
 
 export interface LibrarySongData {
   id: string
@@ -49,8 +48,10 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
 
   return (
     <div className="library">
-      <AddSongDialog
-        id="add-library-song-modal"
+      <SongTable
+        songs={songs}
+        renderActions={song => <AddButton onClick={() => onQueueSong(song)} />}
+        addDialogId="add-library-song-modal"
         onAddFile={async file => {
           const path = (file as File & { path: string }).path
           await window.electron?.addFileSong(path)
@@ -59,10 +60,6 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
           await window.electron?.addUrlSong(kind, url)
         }}
         onAdded={loadSongs}
-      />
-      <SongTable
-        songs={songs}
-        renderActions={song => <AddButton onClick={() => onQueueSong(song)} />}
       />
     </div>
   )

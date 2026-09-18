@@ -34,6 +34,11 @@ export default function RemoteLibrary({ activeQueueIdRef }: { activeQueueIdRef: 
       <SongTable
         songs={songs}
         renderActions={song => <AddButton onClick={() => onQueueSong(song)} />}
+        addDialogId="add-remote-library-song-modal"
+        onAddUrl={async (kind, url) => {
+          await api.put('library/song/url', { kind, url })
+        }}
+        onAdded={loadSongs}
       />
     </div>
   )

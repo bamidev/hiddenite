@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import AddSongDialog from './add-song-dialog.tsx'
+import type { SongKind } from '../song-kind.ts'
 
 export interface SongData {
   id: string
@@ -39,7 +41,21 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
   return pages
 }
 
-export default function SongTable<T extends SongData>({ songs, renderActions }: { songs: T[], renderActions?: (song: T) => ReactNode }) {
+export default function SongTable<T extends SongData>({
+  songs,
+  renderActions,
+  addDialogId,
+  onAddFile,
+  onAddUrl,
+  onAdded,
+}: {
+  songs: T[]
+  renderActions?: (song: T) => ReactNode
+  addDialogId?: string
+  onAddFile?: (file: File) => Promise<void>
+  onAddUrl?: (kind: SongKind, url: string) => Promise<void>
+  onAdded?: () => void
+}) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
 
@@ -59,6 +75,14 @@ export default function SongTable<T extends SongData>({ songs, renderActions }: 
 
   return (
     <div className="song-table">
+      {addDialogId && onAddUrl && (
+        <AddSongDialog
+          id={addDialogId}
+          onAddFile={onAddFile}
+          onAddUrl={onAddUrl}
+          onAdded={onAdded ?? (() => {})}
+        />
+      )}
       {songs.length > SEARCH_THRESHOLD && (
         <input
           type="search"
