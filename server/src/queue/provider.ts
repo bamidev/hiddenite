@@ -43,7 +43,7 @@ export class QueueSong {
   }
 
   toJSON() {
-    return { id: this.song.id, kind: this.song.kind, tags: this.metadata.tags };
+    return { id: this.song.id, kind: this.song.kind, tags: this.metadata.tags, duration: this.metadata.duration };
   }
 }
 
