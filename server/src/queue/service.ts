@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Queue, QueueSong } from './provider';
+import { Queue, QueueSong, refillQueueIfNeeded } from './provider';
 
 @Injectable()
 export class QueueService {
@@ -22,9 +22,10 @@ export class QueueService {
     return queue.songs.map((entry) => entry.toJSON());
   }
 
-  removeSong(queueId: string, songId: string): Queue {
+  async removeSong(queueId: string, songId: string): Promise<Queue> {
     const queue = this.findOne(queueId);
     queue.songs = queue.songs.filter((entry) => entry.song.id !== songId);
+    await refillQueueIfNeeded(queue);
     return queue;
   }
 
@@ -46,9 +47,17 @@ export class QueueService {
     return queue;
   }
 
-  toggleAutoAdd(queueId: string): Queue {
+  async toggleAutoAdd(queueId: string): Promise<Queue> {
     const queue = this.findOne(queueId);
     queue.autoAdd = !queue.autoAdd;
+    await refillQueueIfNeeded(queue);
+    return queue;
+  }
+
+  async setFilter(queueId: string, filter: string): Promise<Queue> {
+    const queue = this.findOne(queueId);
+    queue.filter = filter;
+    await refillQueueIfNeeded(queue);
     return queue;
   }
 

@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs';
 import { readFile } from 'node:fs/promises';
-import { Queue, QueueSong } from '../queue/provider';
+import { Queue, QueueSong, refillQueueIfNeeded } from '../queue/provider';
 import { FileSong } from '../song/provider';
 import type {
   PlaybackEvent,
@@ -59,7 +59,7 @@ export class QueuePoolMixSource implements MixSource {
       return;
     }
 
-    const taken = this.takeFirstSong();
+    const taken = await this.takeFirstSong();
     if (!taken) return;
     if (taken.song.data === undefined && taken.song.song instanceof FileSong) {
       taken.song.data = await readFile(taken.song.song.path);
@@ -87,7 +87,7 @@ export class QueuePoolMixSource implements MixSource {
   }
 
   private async advance(): Promise<void> {
-    const taken = this.takeFirstSong();
+    const taken = await this.takeFirstSong();
     if (taken && taken.song.data === undefined && taken.song.song instanceof FileSong) {
       taken.song.data = await readFile(taken.song.song.path);
     }
@@ -138,11 +138,14 @@ export class QueuePoolMixSource implements MixSource {
     return this.elapsedMs;
   }
 
-  private takeFirstSong(): { song: QueueSong; queueId: string } | null {
+  private async takeFirstSong(): Promise<{ song: QueueSong; queueId: string } | null> {
     for (const queue of this.queues) {
       if (queue.songs.length > 0) {
         const song = queue.songs.shift();
-        if (song) return { song, queueId: queue.id };
+        if (song) {
+          await refillQueueIfNeeded(queue);
+          return { song, queueId: queue.id };
+        }
       }
     }
     return null;

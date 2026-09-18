@@ -2,7 +2,17 @@ import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadataFromBuffer } from 'hiddenite/playback-event';
+import { listLibrarySongs } from 'hiddenite/library';
+import type { LibrarySong } from 'hiddenite/library';
 import type { ExtractedMetadata, Song } from 'hiddenite';
+import { config } from '../config';
+
+export const URL_SONG_KINDS = {
+  bandcamp: BandcampSong,
+  youtube: YouTubeSong,
+};
+
+const AUTO_ADD_TARGET = 3;
 
 export class QueueSong {
   song: Song;
@@ -56,6 +66,7 @@ export class Queue {
   shuffle: boolean;
   repeat: boolean;
   autoAdd: boolean;
+  filter: string;
 
   constructor(id: string, name: string) {
     this.id = id;
@@ -64,10 +75,59 @@ export class Queue {
     this.shuffle = false;
     this.repeat = false;
     this.autoAdd = false;
+    this.filter = '';
   }
 
   static create(): Queue {
     Queue.count += 1;
     return new Queue(randomUUID(), `Queue ${Queue.count}`);
+  }
+}
+
+export async function createQueueSongFromLibrarySong(librarySong: LibrarySong): Promise<QueueSong> {
+  const metadata: ExtractedMetadata = { tags: librarySong.tags, duration: librarySong.duration };
+
+  if (librarySong.kind === 'file') {
+    const song = new FileSong(randomUUID(), librarySong.path);
+    return QueueSong.create(song, undefined, metadata);
+  }
+
+  const SongClass = URL_SONG_KINDS[librarySong.kind as keyof typeof URL_SONG_KINDS];
+  if (!SongClass) {
+    throw new Error(`Unsupported library song kind: ${librarySong.kind}`);
+  }
+  const song = new SongClass(randomUUID(), librarySong.path);
+  return QueueSong.create(song, undefined, metadata);
+}
+
+function matchesFilter(librarySong: LibrarySong, filter: string): boolean {
+  if (!filter) return true;
+  const needle = filter.toLowerCase();
+  return Object.values(librarySong.tags).some((value) => value.toLowerCase().includes(needle));
+}
+
+function pickRandom<T>(items: T[], count: number): T[] {
+  const pool = [...items];
+  const picked: T[] = [];
+  while (pool.length > 0 && picked.length < count) {
+    const index = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(index, 1)[0]);
+  }
+  return picked;
+}
+
+export async function refillQueueIfNeeded(queue: Queue): Promise<void> {
+  if (!queue.autoAdd) return;
+  const needed = AUTO_ADD_TARGET - queue.songs.length;
+  if (needed <= 0) return;
+
+  const queuedPaths = new Set(queue.songs.map((entry) => entry.song.path));
+  const candidates = listLibrarySongs(config.database.path).filter(
+    (librarySong) => matchesFilter(librarySong, queue.filter) && !queuedPaths.has(librarySong.path),
+  );
+  if (candidates.length === 0) return;
+
+  for (const librarySong of pickRandom(candidates, needed)) {
+    queue.songs.push(await createQueueSongFromLibrarySong(librarySong));
   }
 }

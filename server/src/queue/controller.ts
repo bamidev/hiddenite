@@ -15,15 +15,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { randomUUID } from 'node:crypto';
 import { getLibrarySong } from 'hiddenite/library';
 import type { Queue } from './provider';
-import { QueueSong } from './provider';
+import { QueueSong, URL_SONG_KINDS, createQueueSongFromLibrarySong } from './provider';
 import { QueueService } from './service';
 import { config } from '../config';
-import { BandcampSong, FileSong, YouTubeSong } from '../song/provider';
-
-const URL_SONG_KINDS = {
-  bandcamp: BandcampSong,
-  youtube: YouTubeSong,
-};
+import { FileSong } from '../song/provider';
 
 @Controller('queue')
 export class QueueController {
@@ -84,20 +79,8 @@ export class QueueController {
     if (!librarySong) {
       throw new NotFoundException(`Library song ${songId} not found`);
     }
-    const metadata = { tags: librarySong.tags, duration: librarySong.duration };
 
-    if (librarySong.kind === 'file') {
-      const song = new FileSong(randomUUID(), librarySong.path);
-      const queueSong = await QueueSong.create(song, undefined, metadata);
-      return this.service.addSong(id, queueSong);
-    }
-
-    const SongClass = URL_SONG_KINDS[librarySong.kind as keyof typeof URL_SONG_KINDS];
-    if (!SongClass) {
-      throw new BadRequestException(`Unsupported library song kind: ${librarySong.kind}`);
-    }
-    const song = new SongClass(randomUUID(), librarySong.path);
-    const queueSong = await QueueSong.create(song, undefined, metadata);
+    const queueSong = await createQueueSongFromLibrarySong(librarySong);
     return this.service.addSong(id, queueSong);
   }
 
@@ -107,13 +90,18 @@ export class QueueController {
   }
 
   @Delete(':id/song/:songId')
-  removeSong(@Param('id') id: string, @Param('songId') songId: string): Queue {
+  removeSong(@Param('id') id: string, @Param('songId') songId: string): Promise<Queue> {
     return this.service.removeSong(id, songId);
   }
 
   @Put(':id/name')
   rename(@Param('id') id: string, @Body('name') name: string): Queue {
     return this.service.rename(id, name);
+  }
+
+  @Put(':id/filter')
+  setFilter(@Param('id') id: string, @Body('filter') filter: string): Promise<Queue> {
+    return this.service.setFilter(id, filter ?? '');
   }
 
   @Post(':id/shuffle')
@@ -127,7 +115,7 @@ export class QueueController {
   }
 
   @Post(':id/auto-add')
-  toggleAutoAdd(@Param('id') id: string): Queue {
+  toggleAutoAdd(@Param('id') id: string): Promise<Queue> {
     return this.service.toggleAutoAdd(id);
   }
 }

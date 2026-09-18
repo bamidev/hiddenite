@@ -10,12 +10,14 @@ export interface QueueData {
   shuffle: boolean
   repeat: boolean
   autoAdd: boolean
+  filter: string
 }
 
 export default function Queue({ queue }: { queue: QueueData }) {
   const [shuffle, setShuffle] = useState(queue.shuffle)
   const [repeat, setRepeat] = useState(queue.repeat)
   const [autoAdd, setAutoAdd] = useState(queue.autoAdd)
+  const [filter, setFilter] = useState(queue.filter)
   const [songs, setSongs] = useState<SongData[]>([])
 
   function loadSongs() {
@@ -64,6 +66,12 @@ export default function Queue({ queue }: { queue: QueueData }) {
     const response = await api.post(`queue/${queue.id}/auto-add`)
     const updated: QueueData = await response.json()
     setAutoAdd(updated.autoAdd)
+    loadSongs()
+  }
+
+  async function onFilterCommit() {
+    await api.put(`queue/${queue.id}/filter`, { filter })
+    loadSongs()
   }
 
   return (
@@ -82,13 +90,23 @@ export default function Queue({ queue }: { queue: QueueData }) {
       >
         Repeat
       </button>
-      <button
-        type="button"
-        className={`btn btn-sm ${autoAdd ? 'btn-primary' : 'btn-outline-secondary'}`}
-        onClick={onToggleAutoAdd}
-      >
-        Auto-add
-      </button>
+      <div className="input-group input-group-sm w-auto">
+        <button
+          type="button"
+          className={`btn ${autoAdd ? 'btn-primary' : 'btn-outline-secondary'}`}
+          onClick={onToggleAutoAdd}
+        >
+          Auto-add
+        </button>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Filter..."
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          onBlur={onFilterCommit}
+        />
+      </div>
       <AddSongDialog
         id={`add-song-modal-${queue.id}`}
         onAddFile={async file => {
