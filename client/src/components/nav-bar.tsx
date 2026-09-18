@@ -20,32 +20,19 @@ export default function NavBar() {
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              Remote library
+              Library
             </a>
             <ul className="dropdown-menu">
-              <li>
-                <a className="dropdown-item" href="#" onClick={onRescanRemoteLibrary}>Rescan</a>
-              </li>
-            </ul>
-          </li>
-          {window.electron?.isElectron && (
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Library
-              </a>
-              <ul className="dropdown-menu">
+              {window.electron?.isElectron && (
                 <li>
                   <a className="dropdown-item" href="#" onClick={() => window.electron?.rescanLibrary()}>Rescan</a>
                 </li>
-              </ul>
-            </li>
-          )}
+              )}
+              <li>
+                <a className="dropdown-item" href="#" onClick={onRescanRemoteLibrary}>Remote rescan</a>
+              </li>
+            </ul>
+          </li>
         </ul>
       </div>
     </nav>
