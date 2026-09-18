@@ -22,6 +22,12 @@ export class QueueService {
     return queue.songs.map((entry) => entry.toJSON());
   }
 
+  removeSong(queueId: string, songId: string): Queue {
+    const queue = this.findOne(queueId);
+    queue.songs = queue.songs.filter((entry) => entry.song.id !== songId);
+    return queue;
+  }
+
   rename(queueId: string, name: string): Queue {
     const queue = this.findOne(queueId);
     queue.name = name;

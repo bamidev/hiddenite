@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -103,6 +104,11 @@ export class QueueController {
   @Get(':id/song')
   listSongs(@Param('id') id: string) {
     return this.service.listSongs(id);
+  }
+
+  @Delete(':id/song/:songId')
+  removeSong(@Param('id') id: string, @Param('songId') songId: string): Queue {
+    return this.service.removeSong(id, songId);
   }
 
   @Put(':id/name')

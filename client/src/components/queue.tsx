@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api.ts'
 import SongTable, { type SongData } from './song-table.tsx'
 import AddSongDialog from './add-song-dialog.tsx'
+import RemoveButton from './common/remove-button.tsx'
 
 export interface QueueData {
   id: string
@@ -17,11 +18,11 @@ export default function Queue({ queue }: { queue: QueueData }) {
   const [autoAdd, setAutoAdd] = useState(queue.autoAdd)
   const [songs, setSongs] = useState<SongData[]>([])
 
-  useEffect(() => {
-    function loadSongs() {
-      api.get(`queue/${queue.id}/song`).then(r => r.json()).then(setSongs)
-    }
+  function loadSongs() {
+    api.get(`queue/${queue.id}/song`).then(r => r.json()).then(setSongs)
+  }
 
+  useEffect(() => {
     loadSongs()
 
     function onSongAdded(event: Event) {
@@ -41,6 +42,11 @@ export default function Queue({ queue }: { queue: QueueData }) {
       window.removeEventListener('queue-song-taken', onSongTaken)
     }
   }, [queue.id])
+
+  async function onRemoveSong(song: SongData) {
+    await api.delete(`queue/${queue.id}/song/${song.id}`)
+    loadSongs()
+  }
 
   async function onToggleShuffle() {
     const response = await api.post(`queue/${queue.id}/shuffle`)
@@ -95,7 +101,10 @@ export default function Queue({ queue }: { queue: QueueData }) {
         }}
         onAdded={() => window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId: queue.id } }))}
       />
-      <SongTable songs={songs} />
+      <SongTable
+        songs={songs}
+        renderActions={song => <RemoveButton onClick={() => onRemoveSong(song)} />}
+      />
     </>
   )
 }
