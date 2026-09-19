@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/module';
+import { createWebdavMiddleware } from './webdav/provider';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -7,6 +8,11 @@ async function bootstrap() {
   app.enableCors({
     origin: 'http://localhost:5173',
   });
+
+  const webdavMiddleware = createWebdavMiddleware();
+  if (webdavMiddleware) {
+    app.use(webdavMiddleware);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

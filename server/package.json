@@ -28,6 +28,7 @@
     "multer": "^2.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "webdav-server": "^2.6.3",
     "yaml": "^2.9.1"
   },
   "devDependencies": {

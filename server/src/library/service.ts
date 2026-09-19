@@ -7,7 +7,8 @@ import { config } from '../config';
 @Injectable()
 export class LibraryService {
   rescan(): Promise<number> {
-    return rescanLibrary(config.database.path, config.library.paths);
+    const paths = config.library.folders.map((folder) => folder.path);
+    return rescanLibrary(config.database.path, paths);
   }
 
   listSongs(): LibrarySong[] {

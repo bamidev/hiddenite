@@ -3,21 +3,34 @@ import { parse } from 'yaml';
 
 const CONFIG_PATH = '/etc/hiddenite/config.yaml';
 
+export interface LibraryFolderConfig {
+  path: string;
+  webdav: {
+    enable: boolean;
+    username: string;
+  };
+}
+
 export interface Config {
   database: {
     path: string;
   };
   library: {
-    paths: string[];
+    folders: LibraryFolderConfig[];
   };
 }
+
+const DEFAULT_FOLDER_WEBDAV: LibraryFolderConfig['webdav'] = {
+  enable: false,
+  username: 'hiddenite',
+};
 
 const DEFAULT_CONFIG: Config = {
   database: {
     path: '/var/lib/hiddenite/library.sqlite',
   },
   library: {
-    paths: [],
+    folders: [],
   },
 };
 
@@ -38,13 +51,24 @@ function mergeDefaults<T>(defaults: T, loaded: unknown): T {
   return result as T;
 }
 
+function normalizeFolder(raw: unknown): LibraryFolderConfig {
+  const folder = isPlainObject(raw) ? raw : {};
+  return {
+    path: typeof folder.path === 'string' ? folder.path : '',
+    webdav: mergeDefaults(DEFAULT_FOLDER_WEBDAV, folder.webdav),
+  };
+}
+
 function loadConfig(): Config {
   if (!existsSync(CONFIG_PATH)) {
     return DEFAULT_CONFIG;
   }
 
   const raw = parse(readFileSync(CONFIG_PATH, 'utf8'));
-  return mergeDefaults(DEFAULT_CONFIG, raw);
+  const loaded = mergeDefaults(DEFAULT_CONFIG, raw);
+  const rawFolders = isPlainObject(raw) && isPlainObject(raw.library) ? raw.library.folders : undefined;
+  loaded.library.folders = Array.isArray(rawFolders) ? rawFolders.map(normalizeFolder) : [];
+  return loaded;
 }
 
 export const config: Config = loadConfig();
