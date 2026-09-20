@@ -18,14 +18,14 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
-  app.enableCors({
-    origin: [`http://localhost:${config.server.port}`, ...config.server.baseUrls],
-  });
-
   const webdavMiddleware = createWebdavMiddleware();
   if (webdavMiddleware) {
     app.use(webdavMiddleware);
   }
+
+  app.enableCors({
+    origin: [`http://localhost:${config.server.port}`, ...config.server.baseUrls],
+  });
 
   await app.listen(config.server.port);
 }
