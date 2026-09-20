@@ -1,4 +1,3 @@
-import { basename } from 'node:path';
 import { Logger } from '@nestjs/common';
 import { v2 as webdav } from 'webdav-server';
 import { config, type LibraryFolderConfig } from '../config';
@@ -25,16 +24,15 @@ function extractBasicAuthUsername(req: any): string | null {
   return separatorIndex === -1 ? null : decoded.slice(0, separatorIndex);
 }
 
-function uniqueMountName(path: string, used: Set<string>): string {
-  const base = basename(path) || 'root';
-  let name = base;
+function uniqueMountName(name: string, used: Set<string>): string {
+  let mountName = name;
   let suffix = 2;
-  while (used.has(name)) {
-    name = `${base}-${suffix}`;
+  while (used.has(mountName)) {
+    mountName = `${name}-${suffix}`;
     suffix += 1;
   }
-  used.add(name);
-  return name;
+  used.add(mountName);
+  return mountName;
 }
 
 function groupFoldersByUsername(folders: LibraryFolderConfig[]): Map<string, LibraryFolderConfig[]> {
@@ -66,7 +64,7 @@ function createUserServer(username: string, password: string, folders: LibraryFo
 
   const usedNames = new Set<string>();
   for (const folder of folders) {
-    const mountName = uniqueMountName(folder.path, usedNames);
+    const mountName = uniqueMountName(folder.webdav.name, usedNames);
     server.setFileSystemSync(`/${mountName}`, new webdav.PhysicalFileSystem(folder.path));
   }
 

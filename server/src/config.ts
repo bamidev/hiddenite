@@ -8,6 +8,7 @@ export interface LibraryFolderConfig {
   webdav: {
     enable: boolean;
     username: string;
+    name: string;
   };
 }
 
@@ -27,6 +28,7 @@ export interface Config {
 const DEFAULT_FOLDER_WEBDAV: LibraryFolderConfig['webdav'] = {
   enable: false,
   username: 'hiddenite',
+  name: 'music',
 };
 
 const DEFAULT_CONFIG: Config = {
