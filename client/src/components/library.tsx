@@ -37,7 +37,7 @@ export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObj
     formData.append('kind', song.kind)
     if (song.kind === 'file') {
       const data = await window.electron.readFile(song.path)
-      formData.append('file', new Blob([data]), song.path.split('/').pop())
+      formData.append('file', new Blob([data as BlobPart]), song.path.split('/').pop())
     } else {
       formData.append('url', song.path)
       formData.append('tags', JSON.stringify(song.tags))
