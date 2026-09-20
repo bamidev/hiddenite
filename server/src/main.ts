@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: `http://localhost:${config.server.port}`,
+    origin: [`http://localhost:${config.server.port}`, ...config.server.baseUrls],
   });
 
   const webdavMiddleware = createWebdavMiddleware();
