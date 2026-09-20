@@ -1,6 +1,7 @@
 export type SongKind = 'bandcamp' | 'youtube'
 
 const BANDCAMP_HOSTNAME = 'bandcamp.com'
+void BANDCAMP_HOSTNAME
 const YOUTUBE_HOSTNAME = 'youtube.com'
 const YOUTU_BE_HOSTNAME = 'youtu.be'
 
