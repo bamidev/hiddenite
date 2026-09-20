@@ -5,9 +5,23 @@ import AddButton from './common/add-button.tsx'
 import RemoveButton from './common/remove-button.tsx'
 import SongTable, { type SongData } from './song-table.tsx'
 import { showToast } from '../error.ts'
+import type { LibraryFolder } from './libraries.tsx'
 
-export default function RemoteLibrary({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
-  const [songs, setSongs] = useState<SongData[]>([])
+interface RemoteSongData extends SongData {
+  path: string
+}
+
+function isSongInFolder(song: RemoteSongData, folder: LibraryFolder): boolean {
+  const folderPrefix = folder.path.endsWith('/') ? folder.path : `${folder.path}/`
+  return song.path === folder.path || song.path.startsWith(folderPrefix)
+}
+
+export default function RemoteLibrary({ activeQueueIdRef, folder }: {
+  activeQueueIdRef: RefObject<string | null>
+  folder?: LibraryFolder
+}) {
+  const [songs, setSongs] = useState<RemoteSongData[]>([])
+  const visibleSongs = folder ? songs.filter(song => isSongInFolder(song, folder)) : songs
 
   function loadSongs() {
     api.get('library/song').then(response => response.json()).then(setSongs)
@@ -38,15 +52,15 @@ export default function RemoteLibrary({ activeQueueIdRef }: { activeQueueIdRef: 
   return (
     <div className="library">
       <SongTable
-        songs={songs}
+        songs={visibleSongs}
         renderActions={song => (
           <>
             <AddButton onClick={() => onQueueSong(song)} />
             <RemoveButton onClick={() => onRemoveSong(song)} />
           </>
         )}
-        addDialogId="add-remote-library-song-modal"
-        onAddUrl={async (kind, url) => {
+        addDialogId={folder ? undefined : 'add-remote-library-song-modal'}
+        onAddUrl={folder ? undefined : async (kind, url) => {
           await api.put('library/song/url', { kind, url })
         }}
         onAdded={loadSongs}

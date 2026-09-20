@@ -14,6 +14,11 @@ export class LibraryController {
     return this.service.listSongs();
   }
 
+  @Get('folder')
+  listFolders() {
+    return this.service.listFolders();
+  }
+
   @Put('song/url')
   addSongByUrl(@Body('kind') kind: string, @Body('url') url: string) {
     if (!URL_SONG_KINDS.has(kind)) {

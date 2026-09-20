@@ -1,14 +1,40 @@
+import { basename } from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong } from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
 import { config } from '../config';
 
+export interface LibraryFolder {
+  name: string;
+  path: string;
+}
+
+function uniqueFolderName(path: string, used: Set<string>): string {
+  const base = basename(path) || 'root';
+  let name = base;
+  let suffix = 2;
+  while (used.has(name)) {
+    name = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  used.add(name);
+  return name;
+}
+
 @Injectable()
 export class LibraryService {
   rescan(): Promise<number> {
     const paths = config.library.folders.map((folder) => folder.path);
     return rescanLibrary(config.database.path, paths);
+  }
+
+  listFolders(): LibraryFolder[] {
+    const usedNames = new Set<string>();
+    return config.library.folders.map((folder) => ({
+      name: uniqueFolderName(folder.path, usedNames),
+      path: folder.path,
+    }));
   }
 
   listSongs(): LibrarySong[] {
