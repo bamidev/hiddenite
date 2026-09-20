@@ -12,6 +12,9 @@ export interface LibraryFolderConfig {
 }
 
 export interface Config {
+  server: {
+    port: number;
+  };
   database: {
     path: string;
   };
@@ -26,6 +29,9 @@ const DEFAULT_FOLDER_WEBDAV: LibraryFolderConfig['webdav'] = {
 };
 
 const DEFAULT_CONFIG: Config = {
+  server: {
+    port: 8484,
+  },
   database: {
     path: '/var/lib/hiddenite/library.sqlite',
   },

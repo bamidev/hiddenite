@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/module';
+import { config } from './config';
 import { createWebdavMiddleware } from './webdav/provider';
 
 async function bootstrap() {
@@ -14,6 +15,6 @@ async function bootstrap() {
     app.use(webdavMiddleware);
   }
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(config.server.port);
 }
 bootstrap();
