@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { basename } from 'node:path';
 import { parse } from 'yaml';
 
 const CONFIG_PATH = '/etc/hiddenite/config.yaml';
@@ -28,7 +29,7 @@ export interface Config {
 const DEFAULT_FOLDER_WEBDAV: LibraryFolderConfig['webdav'] = {
   enable: false,
   username: 'hiddenite',
-  name: 'music',
+  name: '',
 };
 
 const DEFAULT_CONFIG: Config = {
@@ -63,10 +64,12 @@ function mergeDefaults<T>(defaults: T, loaded: unknown): T {
 
 function normalizeFolder(raw: unknown): LibraryFolderConfig {
   const folder = isPlainObject(raw) ? raw : {};
-  return {
-    path: typeof folder.path === 'string' ? folder.path : '',
-    webdav: mergeDefaults(DEFAULT_FOLDER_WEBDAV, folder.webdav),
-  };
+  const path = typeof folder.path === 'string' ? folder.path : '';
+  const webdav = mergeDefaults(DEFAULT_FOLDER_WEBDAV, folder.webdav);
+  if (!webdav.name) {
+    webdav.name = basename(path) || 'root';
+  }
+  return { path, webdav };
 }
 
 function loadConfig(): Config {
