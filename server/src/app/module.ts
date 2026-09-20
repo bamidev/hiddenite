@@ -11,6 +11,7 @@ import { join } from 'node:path';
     LibraryModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'dist'),
+      exclude: ['/webdav/{*any}', '/webdav'],
     }),
   ],
 })
