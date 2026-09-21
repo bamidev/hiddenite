@@ -16,7 +16,14 @@ function App() {
   useEffect(() => {
     async function loadSources() {
       const response = await api.get('mix-source')
-      setSources(await response.json())
+      const loadedSources: MixSourceData[] = await response.json()
+      setSources(loadedSources)
+
+      // Set the current active queue to the first queue found, if no active queue is there yet
+      if (activeQueueIdRef.current == null) {
+        const firstQueue = loadedSources.flatMap(source => source.queues ?? [])[0]
+        if (firstQueue) activeQueueIdRef.current = firstQueue.id
+      }
     }
     loadSources()
   }, [])
