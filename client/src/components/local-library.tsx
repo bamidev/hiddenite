@@ -14,7 +14,7 @@ export interface LibrarySongData {
   tags: Record<string, string>
 }
 
-export default function Library({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
+export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
   const [songs, setSongs] = useState<LibrarySongData[]>([])
 
   function loadSongs() {

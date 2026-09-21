@@ -5,7 +5,6 @@ import NavBar from './components/nav-bar.tsx'
 import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
-import Library from './components/library.tsx'
 import Libraries from './components/libraries.tsx'
 import CollapsibleSection from './components/common/collapsible-section.tsx'
 
@@ -80,14 +79,9 @@ function App() {
           </button>
         </div>
         <div className="accordion" id="library-accordion">
-          <CollapsibleSection id="remote-library-section" title="Remote library">
+          <CollapsibleSection id="library-section" title="Library">
             <Libraries activeQueueIdRef={activeQueueIdRef} />
           </CollapsibleSection>
-          {window.electron?.isElectron && (
-            <CollapsibleSection id="local-library-section" title="Local library">
-              <Library activeQueueIdRef={activeQueueIdRef} />
-            </CollapsibleSection>
-          )}
         </div>
       </section>
     </>

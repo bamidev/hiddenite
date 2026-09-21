@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import RemoteLibrary from './remote-library.tsx'
+import LocalLibrary from './local-library.tsx'
 
 export interface LibraryFolder {
   name: string
@@ -18,6 +19,22 @@ export default function Libraries({ activeQueueIdRef }: { activeQueueIdRef: RefO
   return (
     <div>
       <ul className="nav nav-tabs" role="tablist">
+        {window.electron?.isElectron && (
+          <li className="nav-item" role="presentation">
+            <button
+              className="nav-link"
+              id="library-tab-local"
+              data-bs-toggle="tab"
+              data-bs-target="#library-pane-local"
+              type="button"
+              role="tab"
+              aria-controls="library-pane-local"
+              aria-selected="false"
+            >
+              Local
+            </button>
+          </li>
+        )}
         <li className="nav-item" role="presentation">
           <button
             className="nav-link active"
@@ -50,6 +67,11 @@ export default function Libraries({ activeQueueIdRef }: { activeQueueIdRef: RefO
         ))}
       </ul>
       <div className="tab-content">
+        {window.electron?.isElectron && (
+          <div className="tab-pane fade" id="library-pane-local" role="tabpanel" aria-labelledby="library-tab-local">
+            <LocalLibrary activeQueueIdRef={activeQueueIdRef} />
+          </div>
+        )}
         <div className="tab-pane fade show active" id="library-pane-all" role="tabpanel" aria-labelledby="library-tab-all">
           <RemoteLibrary activeQueueIdRef={activeQueueIdRef} />
         </div>
