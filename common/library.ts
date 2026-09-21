@@ -138,14 +138,23 @@ export function listLibrarySongs(dbPath: string, query: LibrarySongQuery = {}): 
   }));
 }
 
+function normalizeSongUrl(kind: string, url: string): string {
+  if (kind === 'youtube') {
+    const videoId = songMetadata.extractYouTubeVideoId(url);
+    if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+  }
+  return url;
+}
+
 export function addUrlSong(dbPath: string, kind: string, url: string, folder: string, metadata: ExtractedMetadata): LibrarySong {
+  const normalizedUrl = normalizeSongUrl(kind, url);
   const { tags, duration } = metadata;
   const db = openLibraryDatabase(dbPath);
   let songId: number;
   try {
     ({ lastInsertRowid: songId } = db
       .prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)')
-      .run(url, kind, duration, folder) as { lastInsertRowid: number });
+      .run(normalizedUrl, kind, duration, folder) as { lastInsertRowid: number });
     const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
     for (const [key, value] of Object.entries(tags)) {
       insertTag.run(songId, key, value);
@@ -154,7 +163,7 @@ export function addUrlSong(dbPath: string, kind: string, url: string, folder: st
     db.close();
   }
 
-  return { id: String(songId), path: url, kind, duration, tags, folder };
+  return { id: String(songId), path: normalizedUrl, kind, duration, tags, folder };
 }
 
 export function removeLibrarySong(dbPath: string, id: string): void {
