@@ -66,10 +66,10 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
             <RemoveButton onClick={() => onRemoveSong(song)} />
           </>
         )}
-        addDialogId={folder ? undefined : 'add-remote-library-song-modal'}
-        onAddUrl={folder ? undefined : async (kind, url) => {
-          await api.put('library/song/url', { kind, url })
-        }}
+        addDialogId={folder ? 'add-remote-library-song-modal' : undefined}
+        onAddUrl={folder ? async (kind, url) => {
+          await api.put('library/song/url', { kind, url, folder: folder.path })
+        } : undefined}
         onAdded={loadSongs}
       />
     </div>

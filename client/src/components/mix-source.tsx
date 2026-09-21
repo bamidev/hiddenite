@@ -7,6 +7,7 @@ import EditableLabel from './common/editable-label.tsx'
 import Queue, { type QueueData } from './queue.tsx'
 import SongPlayer from './song-player.tsx'
 import NowPlaying from './now-playing.tsx'
+import type { LibraryFolder } from './consolidated-library.tsx'
 
 export interface MixSourceData {
   id: string
@@ -63,7 +64,7 @@ function QueueTab({ sourceId, queue, active, onRename, onActivate }: { sourceId:
   )
 }
 
-export default function MixSource({ source, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue }: { source: MixSourceData, onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void }) {
+export default function MixSource({ source, folders, onClose, onRename, onAddQueue, onRenameQueue, onActivateQueue }: { source: MixSourceData, folders: LibraryFolder[], onClose: () => void, onRename: (name: string) => void, onAddQueue: () => void, onRenameQueue: (queueId: string, name: string) => void, onActivateQueue: (queueId: string) => void }) {
   const queues = source.queues ?? []
   const [playing, setPlaying] = useState(source.playing)
   const [currentSong, setCurrentSong] = useState(source.currentSong)
@@ -149,7 +150,7 @@ export default function MixSource({ source, onClose, onRename, onAddQueue, onRen
             aria-labelledby={`queue-tab-${source.id}-${queue.id}`}
             key={queue.id}
           >
-            <Queue queue={queue} />
+            <Queue queue={queue} folders={folders} />
           </div>
         ))}
       </div>

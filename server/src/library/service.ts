@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong } from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
@@ -45,12 +45,16 @@ export class LibraryService {
     return getLibrarySong(config.database.path, id);
   }
 
-  async addSongByUrl(kind: string, url: string): Promise<LibrarySong> {
+  async addSongByUrl(kind: string, url: string, folder: string): Promise<LibrarySong> {
+    if (!config.library.folders.some((f) => f.path === folder)) {
+      throw new BadRequestException(`Unknown library folder: ${folder}`);
+    }
+
     const metadata = kind === 'bandcamp' ? await extractBandcampMetadata(url)
       : kind === 'youtube' ? await extractYouTubeMetadata(url)
       : { tags: {}, duration: null };
 
-    return addUrlSong(config.database.path, kind, url, metadata);
+    return addUrlSong(config.database.path, kind, url, folder, metadata);
   }
 
   removeSong(id: string): void {

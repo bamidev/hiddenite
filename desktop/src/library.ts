@@ -16,9 +16,10 @@ function getDbPath(): string {
 const DB_PATH: string = getDbPath()
 mkdirSync(path.dirname(DB_PATH), { recursive: true })
 
+const MUSIC_DIR = path.join(os.homedir(), 'Music')
+
 export async function rescanLibrary(): Promise<number> {
-  const musicDir = path.join(os.homedir(), 'Music')
-  return scanLibrary(DB_PATH, [musicDir])
+  return scanLibrary(DB_PATH, [MUSIC_DIR])
 }
 
 const WRITABLE_TAG_KEYS: Record<string, (tag: any, value: string) => void> = {
@@ -48,15 +49,15 @@ export async function addUrlSong(kind: string, url: string): Promise<void> {
     : kind === 'youtube' ? await extractYouTubeMetadata(url)
     : { tags: {}, duration: null }
 
-  addLibraryUrlSong(DB_PATH, kind, url, metadata)
+  addLibraryUrlSong(DB_PATH, kind, url, MUSIC_DIR, metadata)
 }
 
 export async function addFileSong(filePath: string): Promise<void> {
   const { tags, duration } = await extractFileMetadata(filePath)
   const db = openLibraryDatabase(DB_PATH)
   const { lastInsertRowid: songId } = db
-    .prepare('INSERT INTO song (path, kind, duration) VALUES (?, ?, ?)')
-    .run(filePath, 'file', duration)
+    .prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)')
+    .run(filePath, 'file', duration, MUSIC_DIR)
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)')
   for (const [key, value] of Object.entries(tags)) {
     insertTag.run(songId as number, key, value)

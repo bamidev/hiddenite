@@ -67,6 +67,7 @@ export class Queue {
   repeat: boolean;
   autoAdd: boolean;
   filter: string;
+  autoAddFolder: string | null;
 
   constructor(id: string, name: string) {
     this.id = id;
@@ -76,6 +77,7 @@ export class Queue {
     this.repeat = false;
     this.autoAdd = false;
     this.filter = '';
+    this.autoAddFolder = config.library.folders[0]?.path ?? null;
   }
 
   static create(): Queue {
@@ -100,12 +102,6 @@ export async function createQueueSongFromLibrarySong(librarySong: LibrarySong): 
   return QueueSong.create(song, undefined, metadata);
 }
 
-function matchesFilter(librarySong: LibrarySong, filter: string): boolean {
-  if (!filter) return true;
-  const needle = filter.toLowerCase();
-  return Object.values(librarySong.tags).some((value) => value.toLowerCase().includes(needle));
-}
-
 function pickRandom<T>(items: T[], count: number): T[] {
   const pool = [...items];
   const picked: T[] = [];
@@ -121,10 +117,10 @@ export async function refillQueueIfNeeded(queue: Queue): Promise<void> {
   const needed = AUTO_ADD_TARGET - queue.songs.length;
   if (needed <= 0) return;
 
-  const queuedPaths = new Set(queue.songs.map((entry) => entry.song.path));
-  const candidates = listLibrarySongs(config.database.path).filter(
-    (librarySong) => matchesFilter(librarySong, queue.filter) && !queuedPaths.has(librarySong.path),
-  );
+  const candidates = listLibrarySongs(config.database.path, {
+    folder: queue.autoAddFolder ?? undefined,
+    filter: queue.filter,
+  });
   if (candidates.length === 0) return;
 
   for (const librarySong of pickRandom(candidates, needed)) {

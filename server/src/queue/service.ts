@@ -61,6 +61,13 @@ export class QueueService {
     return queue;
   }
 
+  async setAutoAddFolder(queueId: string, folder: string | null): Promise<Queue> {
+    const queue = this.findOne(queueId);
+    queue.autoAddFolder = folder;
+    await refillQueueIfNeeded(queue);
+    return queue;
+  }
+
   private findOne(id: string): Queue {
     const queue = this.queues.find((q) => q.id === id);
     if (!queue) {

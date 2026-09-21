@@ -104,6 +104,11 @@ export class QueueController {
     return this.service.setFilter(id, filter ?? '');
   }
 
+  @Post(':id/auto-add-folder')
+  setAutoAddFolder(@Param('id') id: string, @Body('folder') folder: string | null): Promise<Queue> {
+    return this.service.setAutoAddFolder(id, folder ?? null);
+  }
+
   @Post(':id/shuffle')
   toggleShuffle(@Param('id') id: string): Queue {
     return this.service.toggleShuffle(id);

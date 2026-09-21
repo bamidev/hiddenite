@@ -5,12 +5,13 @@ import NavBar from './components/nav-bar.tsx'
 import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
-import ConsolidatedLibrary from './components/consolidated-library.tsx'
+import ConsolidatedLibrary, { type LibraryFolder } from './components/consolidated-library.tsx'
 import CollapsibleSection from './components/common/collapsible-section.tsx'
 
 
 function App() {
   const [sources, setSources] = useState<MixSourceData[]>([]);
+  const [libraryFolders, setLibraryFolders] = useState<LibraryFolder[]>([]);
   const activeQueueIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -26,6 +27,8 @@ function App() {
       }
     }
     loadSources()
+
+    api.get('library/folder').then(response => response.json()).then(setLibraryFolders)
   }, [])
 
   async function onAddMixSource() {
@@ -74,6 +77,7 @@ function App() {
             <MixSource
               key={source.id}
               source={source}
+              folders={libraryFolders}
               onClose={() => setSources(s => s.filter(x => x.id !== source.id))}
               onRename={name => onRenameMixSource(source.id, name)}
               onAddQueue={() => onAddQueue(source.id)}

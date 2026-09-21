@@ -12,6 +12,7 @@ export interface LibrarySong {
   kind: string;
   duration: number | null;
   tags: Record<string, string>;
+  folder: string;
 }
 
 export function openLibraryDatabase(dbPath: string): DatabaseSync {
@@ -21,7 +22,8 @@ export function openLibraryDatabase(dbPath: string): DatabaseSync {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path TEXT NOT NULL UNIQUE,
       kind TEXT NOT NULL,
-      duration INTEGER
+      duration INTEGER,
+      folder TEXT NOT NULL
     )
   `);
   db.exec(`
@@ -50,37 +52,63 @@ async function findAudioFiles(dir: string): Promise<string[]> {
 }
 
 export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise<number> {
-  const fileLists = await Promise.all(rootDirs.map(dir => findAudioFiles(dir)));
-  const files = fileLists.flat();
+  const filesByFolder = await Promise.all(rootDirs.map(async folder => ({
+    folder,
+    files: await findAudioFiles(folder),
+  })));
   const db = openLibraryDatabase(dbPath);
 
   db.exec('DELETE FROM tag');
   db.exec('DELETE FROM song');
-  const insertSong = db.prepare('INSERT INTO song (path, kind, duration) VALUES (?, ?, ?)');
+  const insertSong = db.prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)');
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
 
+  let fileCount = 0;
   try {
-    for (const filePath of files) {
-      const { tags, duration } = await songMetadata.extractFileMetadata(filePath);
-      const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration);
-      for (const [key, value] of Object.entries(tags)) {
-        insertTag.run(songId as number, key, value);
+    for (const { folder, files } of filesByFolder) {
+      for (const filePath of files) {
+        const { tags, duration } = await songMetadata.extractFileMetadata(filePath);
+        const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration, folder);
+        for (const [key, value] of Object.entries(tags)) {
+          insertTag.run(songId as number, key, value);
+        }
+        fileCount += 1;
       }
     }
   } finally {
     db.close();
   }
 
-  return files.length;
+  return fileCount;
 }
 
-export function listLibrarySongs(dbPath: string): LibrarySong[] {
+export interface LibrarySongQuery {
+  folder?: string;
+  filter?: string;
+}
+
+export function listLibrarySongs(dbPath: string, query: LibrarySongQuery = {}): LibrarySong[] {
   const db = openLibraryDatabase(dbPath);
-  let songs: { id: number, path: string, kind: string, duration: number | null }[];
+  const conditions: string[] = [];
+  const params: string[] = [];
+  if (query.folder !== undefined) {
+    conditions.push('folder = ?');
+    params.push(query.folder);
+  }
+  if (query.filter) {
+    conditions.push('EXISTS (SELECT 1 FROM tag WHERE tag.song_id = song.id AND LOWER(tag.value) LIKE ?)');
+    params.push(`%${query.filter.toLowerCase()}%`);
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  let songs: { id: number, path: string, kind: string, duration: number | null, folder: string }[];
   let tagRows: { song_id: number, key: string, value: string }[];
   try {
-    songs = db.prepare('SELECT id, path, kind, duration FROM song').all() as typeof songs;
-    tagRows = db.prepare('SELECT song_id, key, value FROM tag').all() as typeof tagRows;
+    songs = db.prepare(`SELECT id, path, kind, duration, folder FROM song ${where}`).all(...params) as typeof songs;
+    const songIds = songs.map(song => song.id);
+    tagRows = songIds.length > 0
+      ? db.prepare(`SELECT song_id, key, value FROM tag WHERE song_id IN (${songIds.map(() => '?').join(',')})`).all(...songIds) as typeof tagRows
+      : [];
   } finally {
     db.close();
   }
@@ -97,17 +125,18 @@ export function listLibrarySongs(dbPath: string): LibrarySong[] {
     kind: song.kind,
     duration: song.duration,
     tags: tagsBySongId.get(song.id) ?? {},
+    folder: song.folder,
   }));
 }
 
-export function addUrlSong(dbPath: string, kind: string, url: string, metadata: ExtractedMetadata): LibrarySong {
+export function addUrlSong(dbPath: string, kind: string, url: string, folder: string, metadata: ExtractedMetadata): LibrarySong {
   const { tags, duration } = metadata;
   const db = openLibraryDatabase(dbPath);
   let songId: number;
   try {
     ({ lastInsertRowid: songId } = db
-      .prepare('INSERT INTO song (path, kind, duration) VALUES (?, ?, ?)')
-      .run(url, kind, duration) as { lastInsertRowid: number });
+      .prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)')
+      .run(url, kind, duration, folder) as { lastInsertRowid: number });
     const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
     for (const [key, value] of Object.entries(tags)) {
       insertTag.run(songId, key, value);
@@ -116,7 +145,7 @@ export function addUrlSong(dbPath: string, kind: string, url: string, metadata: 
     db.close();
   }
 
-  return { id: String(songId), path: url, kind, duration, tags };
+  return { id: String(songId), path: url, kind, duration, tags, folder };
 }
 
 export function removeLibrarySong(dbPath: string, id: string): void {
@@ -131,10 +160,10 @@ export function removeLibrarySong(dbPath: string, id: string): void {
 
 export function getLibrarySong(dbPath: string, id: string): LibrarySong | null {
   const db = openLibraryDatabase(dbPath);
-  let song: { id: number, path: string, kind: string, duration: number | null } | undefined;
+  let song: { id: number, path: string, kind: string, duration: number | null, folder: string } | undefined;
   let tagRows: { key: string, value: string }[];
   try {
-    song = db.prepare('SELECT id, path, kind, duration FROM song WHERE id = ?').get(Number(id)) as typeof song;
+    song = db.prepare('SELECT id, path, kind, duration, folder FROM song WHERE id = ?').get(Number(id)) as typeof song;
     if (!song) return null;
     tagRows = db.prepare('SELECT key, value FROM tag WHERE song_id = ?').all(song.id) as typeof tagRows;
   } finally {
@@ -147,5 +176,6 @@ export function getLibrarySong(dbPath: string, id: string): LibrarySong | null {
     kind: song.kind,
     duration: song.duration,
     tags: Object.fromEntries(tagRows.map(row => [row.key, row.value])),
+    folder: song.folder,
   };
 }

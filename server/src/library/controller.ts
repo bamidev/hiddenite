@@ -20,11 +20,11 @@ export class LibraryController {
   }
 
   @Put('song/url')
-  addSongByUrl(@Body('kind') kind: string, @Body('url') url: string) {
+  addSongByUrl(@Body('kind') kind: string, @Body('url') url: string, @Body('folder') folder: string) {
     if (!URL_SONG_KINDS.has(kind)) {
       throw new BadRequestException(`Unsupported song kind: ${kind}`);
     }
-    return this.service.addSongByUrl(kind, url);
+    return this.service.addSongByUrl(kind, url, folder);
   }
 
   @Delete('song/:id')
