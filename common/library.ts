@@ -67,7 +67,15 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
   try {
     for (const { folder, files } of filesByFolder) {
       for (const filePath of files) {
-        const { tags, duration } = await songMetadata.extractFileMetadata(filePath);
+        let metadata: ExtractedMetadata;
+        try {
+          metadata = await songMetadata.extractFileMetadata(filePath);
+        } catch (err) {
+          console.warn(`Skipping library file ${filePath}:`, err);
+          continue;
+        }
+
+        const { tags, duration } = metadata;
         const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration, folder);
         for (const [key, value] of Object.entries(tags)) {
           insertTag.run(songId as number, key, value);
