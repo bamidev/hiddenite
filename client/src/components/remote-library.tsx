@@ -10,11 +10,7 @@ import type { LibraryFolder } from './consolidated-library.tsx'
 
 interface RemoteSongData extends SongData {
   path: string
-}
-
-function isSongInFolder(song: RemoteSongData, folder: LibraryFolder): boolean {
-  const folderPrefix = folder.path.endsWith('/') ? folder.path : `${folder.path}/`
-  return song.path === folder.path || song.path.startsWith(folderPrefix)
+  folder: string
 }
 
 export default function RemoteLibrary({ activeQueueIdRef, folder }: {
@@ -22,7 +18,7 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   folder?: LibraryFolder
 }) {
   const [songs, setSongs] = useState<RemoteSongData[]>([])
-  const visibleSongs = folder ? songs.filter(song => isSongInFolder(song, folder)) : songs
+  const visibleSongs = folder ? songs.filter(song => song.folder === folder.path) : songs
 
   function loadSongs() {
     api.get('library/song').then(response => response.json()).then(setSongs)
