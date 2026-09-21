@@ -12,6 +12,8 @@ export class MixSourceService {
 
   constructor(private readonly queueService: QueueService) {
     this.queueService = queueService;
+    const source = this.create();
+    this.addQueue(source.id);
   }
 
   findAll(): MixSource[] {
