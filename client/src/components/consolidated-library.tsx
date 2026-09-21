@@ -22,33 +22,19 @@ export default function ConsolidatedLibrary({ activeQueueIdRef }: { activeQueueI
         {window.electron?.isElectron && (
           <li className="nav-item" role="presentation">
             <button
-              className="nav-link"
+              className="nav-link active"
               id="library-tab-local"
               data-bs-toggle="tab"
               data-bs-target="#library-pane-local"
               type="button"
               role="tab"
               aria-controls="library-pane-local"
-              aria-selected="false"
+              aria-selected="true"
             >
               Local
             </button>
           </li>
         )}
-        <li className="nav-item" role="presentation">
-          <button
-            className="nav-link active"
-            id="library-tab-all"
-            data-bs-toggle="tab"
-            data-bs-target="#library-pane-all"
-            type="button"
-            role="tab"
-            aria-controls="library-pane-all"
-            aria-selected="true"
-          >
-            All
-          </button>
-        </li>
         {folders.map(folder => (
           <li className="nav-item" role="presentation" key={folder.name}>
             <button
@@ -68,13 +54,10 @@ export default function ConsolidatedLibrary({ activeQueueIdRef }: { activeQueueI
       </ul>
       <div className="tab-content">
         {window.electron?.isElectron && (
-          <div className="tab-pane fade" id="library-pane-local" role="tabpanel" aria-labelledby="library-tab-local">
+          <div className="tab-pane fade show active" id="library-pane-local" role="tabpanel" aria-labelledby="library-tab-local">
             <LocalLibrary activeQueueIdRef={activeQueueIdRef} />
           </div>
         )}
-        <div className="tab-pane fade show active" id="library-pane-all" role="tabpanel" aria-labelledby="library-tab-all">
-          <RemoteLibrary activeQueueIdRef={activeQueueIdRef} />
-        </div>
         {folders.map(folder => (
           <div
             key={folder.name}
