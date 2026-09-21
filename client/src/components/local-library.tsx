@@ -3,6 +3,7 @@ import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import AddButton from './common/add-button.tsx'
 import RemoveButton from './common/remove-button.tsx'
+import ActionMenu from './common/action-menu.tsx'
 import SongTable from './song-table.tsx'
 import { showToast } from '../error.ts'
 
@@ -52,8 +53,14 @@ export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: R
     loadSongs()
   }
 
+  async function onRescan() {
+    await window.electron?.rescanLibrary()
+    loadSongs()
+  }
+
   return (
     <div className="library">
+      <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
       <SongTable
         songs={songs}
         renderActions={song => (

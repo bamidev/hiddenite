@@ -3,9 +3,10 @@ import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import AddButton from './common/add-button.tsx'
 import RemoveButton from './common/remove-button.tsx'
+import ActionMenu from './common/action-menu.tsx'
 import SongTable, { type SongData } from './song-table.tsx'
 import { showToast } from '../error.ts'
-import type { LibraryFolder } from './libraries.tsx'
+import type { LibraryFolder } from './consolidated-library.tsx'
 
 interface RemoteSongData extends SongData {
   path: string
@@ -49,8 +50,14 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     loadSongs()
   }
 
+  async function onRescan() {
+    await api.post('library/rescan')
+    window.dispatchEvent(new CustomEvent('remote-library-rescanned'))
+  }
+
   return (
     <div className="library">
+      <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
       <SongTable
         songs={visibleSongs}
         renderActions={song => (
