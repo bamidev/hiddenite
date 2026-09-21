@@ -75,4 +75,6 @@ export default class Api {
   }
 }
 
-export const api = new Api(window.location.origin);
+// When serving the client through Vite's dev server, we need to point the API at the local instance of the server (using the default port).
+// Make sure the add "http://localhost:5173" as one of the `baseUrls` in /etc/hiddenite/config.yaml, otherwise, you will get CORS issues. 
+export const api = new Api(import.meta.env.DEV ? 'http://localhost:8484' : window.location.origin);
