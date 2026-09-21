@@ -5,7 +5,7 @@ import NavBar from './components/nav-bar.tsx'
 import './app.css'
 import MixSource, { type MixSourceData } from './components/mix-source.tsx'
 import { type QueueData } from './components/queue.tsx'
-import Libraries from './components/libraries.tsx'
+import ConsolidatedLibrary from './components/consolidated-library.tsx'
 import CollapsibleSection from './components/common/collapsible-section.tsx'
 
 
@@ -80,7 +80,7 @@ function App() {
         </div>
         <div className="accordion" id="library-accordion">
           <CollapsibleSection id="library-section" title="Library">
-            <Libraries activeQueueIdRef={activeQueueIdRef} />
+            <ConsolidatedLibrary activeQueueIdRef={activeQueueIdRef} />
           </CollapsibleSection>
         </div>
       </section>

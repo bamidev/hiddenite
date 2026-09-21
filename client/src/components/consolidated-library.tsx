@@ -9,7 +9,7 @@ export interface LibraryFolder {
   path: string
 }
 
-export default function Libraries({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
+export default function ConsolidatedLibrary({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
   const [folders, setFolders] = useState<LibraryFolder[]>([])
 
   useEffect(() => {
