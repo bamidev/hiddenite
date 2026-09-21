@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { rescanLibrary, listSongs, addUrlSong, addFileSong, removeSong } from './library'
+import { rescanLibrary, listSongs, addUrlSong, addFileSong, removeSong, setTag } from './library'
 
 let win: BrowserWindow
 
@@ -24,6 +24,7 @@ ipcMain.handle('library:list', () => listSongs())
 ipcMain.handle('library:add-url-song', (_event, kind: string, url: string) => addUrlSong(kind, url))
 ipcMain.handle('library:add-file-song', (_event, filePath: string) => addFileSong(filePath))
 ipcMain.handle('library:remove-song', (_event, id: string) => removeSong(id))
+ipcMain.handle('library:set-tag', (_event, id: string, key: string, value: string) => setTag(id, key, value))
 ipcMain.handle('fs:read-file', (_event, filePath: string) => fs.readFile(filePath))
 ipcMain.handle('window:click-at', async (_event, x: number, y: number) => {
   win.webContents.sendInputEvent({ type: 'mouseMove', x, y })

@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { APP_NAME } from 'hiddenite'
-import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong } from 'hiddenite/library'
+import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong, setSongTag, getLibrarySong } from 'hiddenite/library'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
 const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
@@ -63,6 +63,15 @@ export async function addFileSong(filePath: string): Promise<void> {
     insertTag.run(songId as number, key, value)
   }
   db.close()
+}
+
+export async function setTag(id: string, key: string, value: string): Promise<void> {
+  setSongTag(DB_PATH, id, key, value)
+
+  const song = getLibrarySong(DB_PATH, id)
+  if (song?.kind === 'file' && WRITABLE_TAG_KEYS[key]) {
+    await writeTag(song.path, key, value)
+  }
 }
 
 export function listSongs() {

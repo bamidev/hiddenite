@@ -1,6 +1,6 @@
 import { basename } from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong } from 'hiddenite/library';
+import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong, setSongTag } from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
 import { config } from '../config';
@@ -59,5 +59,9 @@ export class LibraryService {
 
   removeSong(id: string): void {
     removeLibrarySong(config.database.path, id);
+  }
+
+  setTag(id: string, key: string, value: string): void {
+    setSongTag(config.database.path, id, key, value);
   }
 }

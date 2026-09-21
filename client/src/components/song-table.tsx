@@ -22,6 +22,39 @@ function formatDuration(duration: number | null | undefined): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
+function EditableTagCell({ value, onSave }: { value: string, onSave: (value: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  if (!editing) {
+    return (
+      <td onDoubleClick={() => { setDraft(value); setEditing(true) }}>{value}</td>
+    )
+  }
+
+  function commit() {
+    setEditing(false)
+    if (draft !== value) onSave(draft)
+  }
+
+  return (
+    <td>
+      <input
+        type="text"
+        className="form-control form-control-sm"
+        autoFocus
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+          else if (e.key === 'Escape') { setDraft(value); setEditing(false) }
+        }}
+      />
+    </td>
+  )
+}
+
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   const keep = new Set<number>()
   keep.add(0)
@@ -48,6 +81,7 @@ export default function SongTable<T extends SongData>({
   onAddFile,
   onAddUrl,
   onAdded,
+  onEditTag,
 }: {
   songs: T[]
   renderActions?: (song: T) => ReactNode
@@ -55,6 +89,7 @@ export default function SongTable<T extends SongData>({
   onAddFile?: (file: File) => Promise<void>
   onAddUrl?: (kind: SongKind, url: string) => Promise<void>
   onAdded?: () => void
+  onEditTag?: (song: T, key: string, value: string) => void
 }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -107,7 +142,15 @@ export default function SongTable<T extends SongData>({
             {pageSongs.map(song => (
               <tr key={song.id} className="library-row">
                 {TAG_COLUMNS.map(key => (
-                  <td key={key}>{song.tags[key] ?? ''}</td>
+                  onEditTag ? (
+                    <EditableTagCell
+                      key={key}
+                      value={song.tags[key] ?? ''}
+                      onSave={value => onEditTag(song, key, value)}
+                    />
+                  ) : (
+                    <td key={key}>{song.tags[key] ?? ''}</td>
+                  )
                 ))}
                 <td>{formatDuration(song.duration)}</td>
                 {renderActions && (

@@ -32,6 +32,11 @@ export class LibraryController {
     this.service.removeSong(id);
   }
 
+  @Put('song/:id/tag')
+  setTag(@Param('id') id: string, @Body('key') key: string, @Body('value') value: string) {
+    this.service.setTag(id, key, value);
+  }
+
   @Post('rescan')
   async rescan() {
     const count = await this.service.rescan();

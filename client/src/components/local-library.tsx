@@ -58,6 +58,11 @@ export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: R
     loadSongs()
   }
 
+  async function onEditTag(song: LibrarySongData, key: string, value: string) {
+    await window.electron?.setTag(song.id, key, value)
+    loadSongs()
+  }
+
   return (
     <div className="library">
       <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
@@ -78,6 +83,7 @@ export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: R
           await window.electron?.addUrlSong(kind, url)
         }}
         onAdded={loadSongs}
+        onEditTag={onEditTag}
       />
     </div>
   )

@@ -166,6 +166,18 @@ export function addUrlSong(dbPath: string, kind: string, url: string, folder: st
   return { id: String(songId), path: normalizedUrl, kind, duration, tags, folder };
 }
 
+export function setSongTag(dbPath: string, id: string, key: string, value: string): void {
+  const db = openLibraryDatabase(dbPath);
+  try {
+    db.prepare(`
+      INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)
+      ON CONFLICT (song_id, key) DO UPDATE SET value = excluded.value
+    `).run(Number(id), key, value);
+  } finally {
+    db.close();
+  }
+}
+
 export function removeLibrarySong(dbPath: string, id: string): void {
   const db = openLibraryDatabase(dbPath);
   try {

@@ -10,6 +10,7 @@ declare global {
       addUrlSong: (kind: string, url: string) => Promise<void>
       addFileSong: (path: string) => Promise<void>
       removeSong: (id: string) => Promise<void>
+      setTag: (id: string, key: string, value: string) => Promise<void>
       clickAt: (x: number, y: number) => Promise<void>
     }
   }

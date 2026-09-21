@@ -51,6 +51,11 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     window.dispatchEvent(new CustomEvent('remote-library-rescanned'))
   }
 
+  async function onEditTag(song: RemoteSongData, key: string, value: string) {
+    await api.put(`library/song/${song.id}/tag`, { key, value })
+    loadSongs()
+  }
+
   return (
     <div className="library">
       <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
@@ -67,6 +72,7 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
           await api.put('library/song/url', { kind, url, folder: folder.path })
         } : undefined}
         onAdded={loadSongs}
+        onEditTag={onEditTag}
       />
     </div>
   )
