@@ -23,7 +23,8 @@ export function openLibraryDatabase(dbPath: string): DatabaseSync {
       path TEXT NOT NULL UNIQUE,
       kind TEXT NOT NULL,
       duration INTEGER,
-      folder TEXT NOT NULL
+      folder TEXT NOT NULL,
+      added_by_scan INTEGER NOT NULL DEFAULT 0
     )
   `);
   db.exec(`
@@ -58,9 +59,9 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
   })));
   const db = openLibraryDatabase(dbPath);
 
-  db.exec('DELETE FROM tag');
-  db.exec('DELETE FROM song');
-  const insertSong = db.prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)');
+  db.exec('DELETE FROM tag WHERE song_id IN (SELECT id FROM song WHERE added_by_scan = 1)');
+  db.exec('DELETE FROM song WHERE added_by_scan = 1');
+  const insertSong = db.prepare('INSERT INTO song (path, kind, duration, folder, added_by_scan) VALUES (?, ?, ?, ?, 1)');
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
 
   let fileCount = 0;
