@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
-import { api } from '../api.ts'
-import AddButton from './common/add-button.tsx'
-import RemoveButton from './common/remove-button.tsx'
-import ActionMenu from './common/action-menu.tsx'
-import SongTable from './song-table.tsx'
-import { showToast } from '../error.ts'
+import { api } from '../../api.ts'
+import AddButton from '../common/add-button.tsx'
+import RemoveButton from '../common/remove-button.tsx'
+import ActionMenu from '../common/action-menu.tsx'
+import SongTable from '../song-table.tsx'
+import { showToast } from '../../error.ts'
 
 export interface LibrarySongData {
   id: string

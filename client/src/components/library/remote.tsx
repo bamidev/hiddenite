@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
-import { api } from '../api.ts'
-import AddButton from './common/add-button.tsx'
-import RemoveButton from './common/remove-button.tsx'
-import ActionMenu from './common/action-menu.tsx'
-import SongTable, { type SongData } from './song-table.tsx'
-import { showToast } from '../error.ts'
-import type { LibraryFolder } from './consolidated-library.tsx'
+import { api } from '../../api.ts'
+import AddButton from '../common/add-button.tsx'
+import RemoveButton from '../common/remove-button.tsx'
+import ActionMenu from '../common/action-menu.tsx'
+import SongTable, { type SongData } from '../song-table.tsx'
+import { showToast } from '../../error.ts'
+import type { LibraryFolder } from '../consolidated-library.tsx'
 
 interface RemoteSongData extends SongData {
   path: string

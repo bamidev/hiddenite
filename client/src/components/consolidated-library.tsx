@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../api.ts'
-import RemoteLibrary from './remote-library.tsx'
-import LocalLibrary from './local-library.tsx'
+import RemoteLibrary from './library/remote.tsx'
+import LocalLibrary from './library/local.tsx'
 
 export interface LibraryFolder {
   name: string
