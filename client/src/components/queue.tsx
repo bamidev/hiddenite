@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.ts'
 import SongTable, { type SongData } from './song-table.tsx'
-import AddSongDialog from './add-song-dialog.tsx'
+import AddSongDialog from './dialog/add-song.tsx'
 import RemoveButton from './common/remove-button.tsx'
 import type { LibraryFolder } from './consolidated-library.tsx'
 

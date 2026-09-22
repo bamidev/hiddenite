@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import AddSongDialog from './add-song-dialog.tsx'
-import AddColumnDialog from './add-column-dialog.tsx'
+import AddSongDialog from './dialog/add-song.tsx'
+import AddColumnDialog from './dialog/add-column.tsx'
 import type { SongKind } from '../song-kind.ts'
 
 export interface SongData {

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Modal } from 'bootstrap'
-import { detectSongKind, type SongKind } from '../song-kind.ts'
+import { detectSongKind, type SongKind } from '../../song-kind.ts'
 
 export default function AddSongDialog({ id, onAddFile, onAddUrl, onAdded }: {
   id: string
