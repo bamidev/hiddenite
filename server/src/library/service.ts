@@ -1,6 +1,6 @@
 import { basename } from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { rescanLibrary, listLibrarySongs, getLibrarySong, addUrlSong, removeLibrarySong, setSongTag } from 'hiddenite/library';
+import * as library from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
 import { config } from '../config';
@@ -26,7 +26,7 @@ function uniqueFolderName(path: string, used: Set<string>): string {
 export class LibraryService {
   rescan(): Promise<number> {
     const paths = config.library.folders.map((folder) => folder.path);
-    return rescanLibrary(config.database.path, paths);
+    return library.rescanLibrary(config.database.path, paths);
   }
 
   listFolders(): LibraryFolder[] {
@@ -37,12 +37,12 @@ export class LibraryService {
     }));
   }
 
-  listSongs(): LibrarySong[] {
-    return listLibrarySongs(config.database.path);
+  listSongs(): Promise<LibrarySong[]> {
+    return library.listLibrarySongs(config.database.path);
   }
 
   findSong(id: string): LibrarySong | null {
-    return getLibrarySong(config.database.path, id);
+    return library.getLibrarySong(config.database.path, id);
   }
 
   async addSongByUrl(kind: string, url: string, folder: string): Promise<LibrarySong> {
@@ -54,14 +54,26 @@ export class LibraryService {
       : kind === 'youtube' ? await extractYouTubeMetadata(url)
       : { tags: {}, duration: null };
 
-    return addUrlSong(config.database.path, kind, url, folder, metadata);
+    return library.addUrlSong(config.database.path, kind, url, folder, metadata);
   }
 
   removeSong(id: string): void {
-    removeLibrarySong(config.database.path, id);
+    library.removeLibrarySong(config.database.path, id);
   }
 
   setTag(id: string, key: string, value: string): void {
-    setSongTag(config.database.path, id, key, value);
+    library.setSongTag(config.database.path, id, key, value);
+  }
+
+  listColumns(folder: string): string[] {
+    return library.listColumns(config.database.path, folder);
+  }
+
+  addColumn(folder: string, key: string): void {
+    library.addColumn(config.database.path, folder, key);
+  }
+
+  removeColumn(folder: string, key: string): void {
+    library.removeColumn(config.database.path, folder, key);
   }
 }

@@ -17,14 +17,20 @@ export interface LibrarySongData {
 
 export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
   const [songs, setSongs] = useState<LibrarySongData[]>([])
+  const [columns, setColumns] = useState<string[]>([])
 
   function loadSongs() {
     window.electron?.listSongs().then(setSongs)
   }
 
+  function loadColumns() {
+    window.electron?.listColumns().then(setColumns)
+  }
+
   useEffect(() => {
     if (!window.electron?.isElectron) return
     loadSongs()
+    loadColumns()
   }, [])
 
   async function onQueueSong(song: LibrarySongData) {
@@ -63,6 +69,17 @@ export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: R
     loadSongs()
   }
 
+  async function onAddColumn(key: string) {
+    await window.electron?.addColumn(key)
+    loadColumns()
+    loadSongs()
+  }
+
+  async function onRemoveColumn(key: string) {
+    await window.electron?.removeColumn(key)
+    loadColumns()
+  }
+
   return (
     <div className="library">
       <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
@@ -84,6 +101,9 @@ export default function LocalLibrary({ activeQueueIdRef }: { activeQueueIdRef: R
         }}
         onAdded={loadSongs}
         onEditTag={onEditTag}
+        columns={columns}
+        onAddColumn={onAddColumn}
+        onRemoveColumn={onRemoveColumn}
       />
     </div>
   )

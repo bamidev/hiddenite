@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { APP_NAME } from 'hiddenite'
-import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong, setSongTag, getLibrarySong } from 'hiddenite/library'
+import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong, setSongTag, getLibrarySong, listColumns as listLibraryColumns, addColumn as addLibraryColumn, removeColumn as removeLibraryColumn } from 'hiddenite/library'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
 const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
@@ -53,7 +53,7 @@ export async function addUrlSong(kind: string, url: string): Promise<void> {
 }
 
 export async function addFileSong(filePath: string): Promise<void> {
-  const { tags, duration } = await extractFileMetadata(filePath)
+  const { tags, duration } = await extractFileMetadata(filePath, listLibraryColumns(DB_PATH, MUSIC_DIR))
   const db = openLibraryDatabase(DB_PATH)
   const { lastInsertRowid: songId } = db
     .prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)')
@@ -75,9 +75,21 @@ export async function setTag(id: string, key: string, value: string): Promise<vo
 }
 
 export function listSongs() {
-  return listLibrarySongs(DB_PATH)
+  return listLibrarySongs(DB_PATH, {})
 }
 
 export function removeSong(id: string): void {
   removeLibrarySong(DB_PATH, id)
+}
+
+export function listColumns(): string[] {
+  return listLibraryColumns(DB_PATH, MUSIC_DIR)
+}
+
+export function addColumn(key: string): void {
+  addLibraryColumn(DB_PATH, MUSIC_DIR, key)
+}
+
+export function removeColumn(key: string): void {
+  removeLibraryColumn(DB_PATH, MUSIC_DIR, key)
 }

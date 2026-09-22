@@ -11,6 +11,9 @@ declare global {
       addFileSong: (path: string) => Promise<void>
       removeSong: (id: string) => Promise<void>
       setTag: (id: string, key: string, value: string) => Promise<void>
+      listColumns: () => Promise<string[]>
+      addColumn: (key: string) => Promise<void>
+      removeColumn: (key: string) => Promise<void>
       clickAt: (x: number, y: number) => Promise<void>
     }
   }

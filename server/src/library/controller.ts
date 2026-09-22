@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { LibraryService } from './service';
 
 const URL_SONG_KINDS = new Set(['bandcamp', 'youtube']);
@@ -41,5 +41,20 @@ export class LibraryController {
   async rescan() {
     const count = await this.service.rescan();
     return { count };
+  }
+
+  @Get('column')
+  listColumns(@Query('folder') folder: string) {
+    return this.service.listColumns(folder);
+  }
+
+  @Put('column')
+  addColumn(@Body('folder') folder: string, @Body('key') key: string) {
+    this.service.addColumn(folder, key);
+  }
+
+  @Delete('column')
+  removeColumn(@Body('folder') folder: string, @Body('key') key: string) {
+    this.service.removeColumn(folder, key);
   }
 }

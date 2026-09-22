@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import AddSongDialog from './add-song-dialog.tsx'
+import AddColumnDialog from './add-column-dialog.tsx'
 import type { SongKind } from '../song-kind.ts'
 
 export interface SongData {
@@ -9,7 +10,8 @@ export interface SongData {
   duration?: number | null
 }
 
-const TAG_COLUMNS = ['artist', 'album', 'title', 'rating']
+// Used when the caller doesn't manage a persisted column list (e.g. the queue table).
+const DEFAULT_TAG_COLUMNS = ['artist', 'album', 'title', 'rating']
 const PAGE_SIZE = 10000
 const SIBLING_COUNT = 1
 const SEARCH_THRESHOLD = 20
@@ -55,6 +57,41 @@ function EditableTagCell({ value, onSave }: { value: string, onSave: (value: str
   )
 }
 
+function ColumnHeaderMenu({ label, onDelete }: { label: string, onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function onClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  return (
+    <div className="action-menu" ref={ref} onDoubleClick={() => setOpen(o => !o)}>
+      {label}
+      {open && (
+        <div className="action-menu-list">
+          <button
+            type="button"
+            className="action-menu-item"
+            onClick={() => { setOpen(false); onDelete() }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   const keep = new Set<number>()
   keep.add(0)
@@ -82,6 +119,9 @@ export default function SongTable<T extends SongData>({
   onAddUrl,
   onAdded,
   onEditTag,
+  columns: columnsProp,
+  onAddColumn,
+  onRemoveColumn,
 }: {
   songs: T[]
   renderActions?: (song: T) => ReactNode
@@ -90,9 +130,14 @@ export default function SongTable<T extends SongData>({
   onAddUrl?: (kind: SongKind, url: string) => Promise<void>
   onAdded?: () => void
   onEditTag?: (song: T, key: string, value: string) => void
+  columns?: string[]
+  onAddColumn?: (key: string) => void
+  onRemoveColumn?: (key: string) => void
 }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
+  const [addColumnDialogId] = useState(() => `add-column-dialog-${Math.random().toString(36).slice(2)}`)
+  const columns = columnsProp ?? DEFAULT_TAG_COLUMNS
 
   useEffect(() => {
     setPage(0)
@@ -131,9 +176,18 @@ export default function SongTable<T extends SongData>({
         <table className="table table-striped">
           <thead>
             <tr>
-              {TAG_COLUMNS.map(key => (
-                <th key={key} className="text-capitalize">{key}</th>
+              {columns.map(key => (
+                <th key={key} className="text-capitalize">
+                  {onRemoveColumn ? (
+                    <ColumnHeaderMenu label={key} onDelete={() => onRemoveColumn(key)} />
+                  ) : key}
+                </th>
               ))}
+              {onAddColumn && (
+                <th>
+                  <AddColumnDialog id={addColumnDialogId} existingColumns={columns} onAdd={onAddColumn} />
+                </th>
+              )}
               <th>Duration</th>
               {renderActions && <th></th>}
             </tr>
@@ -141,7 +195,7 @@ export default function SongTable<T extends SongData>({
           <tbody>
             {pageSongs.map(song => (
               <tr key={song.id} className="library-row">
-                {TAG_COLUMNS.map(key => (
+                {columns.map(key => (
                   onEditTag ? (
                     <EditableTagCell
                       key={key}
@@ -152,6 +206,7 @@ export default function SongTable<T extends SongData>({
                     <td key={key}>{song.tags[key] ?? ''}</td>
                   )
                 ))}
+                {onAddColumn && <td></td>}
                 <td>{formatDuration(song.duration)}</td>
                 {renderActions && (
                   <td className="library-row-actions">

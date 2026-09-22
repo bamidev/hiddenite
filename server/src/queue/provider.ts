@@ -117,7 +117,7 @@ export async function refillQueueIfNeeded(queue: Queue): Promise<void> {
   const needed = AUTO_ADD_TARGET - queue.songs.length;
   if (needed <= 0) return;
 
-  const candidates = listLibrarySongs(config.database.path, {
+  const candidates = await listLibrarySongs(config.database.path, {
     folder: queue.autoAddFolder ?? undefined,
     filter: queue.filter,
   });

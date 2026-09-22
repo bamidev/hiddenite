@@ -18,14 +18,21 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   folder?: LibraryFolder
 }) {
   const [songs, setSongs] = useState<RemoteSongData[]>([])
+  const [columns, setColumns] = useState<string[]>([])
   const visibleSongs = folder ? songs.filter(song => song.folder === folder.path) : songs
 
   function loadSongs() {
     api.get('library/song').then(response => response.json()).then(setSongs)
   }
 
+  function loadColumns() {
+    if (!folder) return
+    api.get(`library/column?folder=${encodeURIComponent(folder.path)}`).then(response => response.json()).then(setColumns)
+  }
+
   useEffect(() => {
     loadSongs()
+    loadColumns()
     window.addEventListener('remote-library-rescanned', loadSongs)
     return () => window.removeEventListener('remote-library-rescanned', loadSongs)
   }, [])
@@ -56,6 +63,19 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     loadSongs()
   }
 
+  async function onAddColumn(key: string) {
+    if (!folder) return
+    await api.put('library/column', { folder: folder.path, key })
+    loadColumns()
+    loadSongs()
+  }
+
+  async function onRemoveColumn(key: string) {
+    if (!folder) return
+    await api.delete('library/column', { folder: folder.path, key })
+    loadColumns()
+  }
+
   return (
     <div className="library">
       <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
@@ -73,6 +93,9 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
         } : undefined}
         onAdded={loadSongs}
         onEditTag={onEditTag}
+        columns={folder ? columns : undefined}
+        onAddColumn={folder ? onAddColumn : undefined}
+        onRemoveColumn={folder ? onRemoveColumn : undefined}
       />
     </div>
   )

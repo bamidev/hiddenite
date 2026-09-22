@@ -121,14 +121,48 @@ export async function extractYouTubeMetadata(url: string): Promise<ExtractedMeta
   return { tags, duration };
 }
 
-export async function extractFileMetadata(filePath: string): Promise<ExtractedMetadata> {
+// Renames applied to a handful of taglib fields so they match the names used
+// elsewhere in the app (e.g. the "artist" tag predates this generic extraction).
+const TAG_FIELD_ALIASES: Record<string, string> = {
+  artist: 'performers',
+};
+
+function readTagValue(tag: Record<string, unknown>, propertyName: string): string | null {
+  const value = tag[propertyName];
+  if (Array.isArray(value)) return value.length > 0 ? value.join('; ') : null;
+  if (typeof value === 'number') return value !== 0 ? String(value) : null;
+  if (typeof value === 'string') return value || null;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'boolean') return value ? 'true' : null;
+  return null;
+}
+
+// Only reads the tag fields that are actually configured to be shown as columns,
+// so scanning doesn't do the work of extracting data nobody will see.
+function extractRequestedTagFields(tag: object, columns: string[]): Record<string, string> {
+  const tags: Record<string, string> = {};
+  for (const key of columns) {
+    const propertyName = TAG_FIELD_ALIASES[key] ?? key;
+    if (!(propertyName in tag)) continue;
+    const text = readTagValue(tag as Record<string, unknown>, propertyName);
+    if (text) tags[key] = text;
+  }
+  return tags;
+}
+
+function extractDefaultTagFields(tag: { firstPerformer: string, album: string, title: string }): Record<string, string> {
+  const tags: Record<string, string> = {};
+  if (tag.firstPerformer) tags.artist = tag.firstPerformer;
+  if (tag.album) tags.album = tag.album;
+  if (tag.title) tags.title = tag.title;
+  return tags;
+}
+
+export async function extractFileMetadata(filePath: string, columns?: string[]): Promise<ExtractedMetadata> {
   const TagLib = await import('node-taglib-sharp');
   const file = TagLib.File.createFromPath(filePath);
   try {
-    const tags: Record<string, string> = {};
-    if (file.tag.firstPerformer) tags.artist = file.tag.firstPerformer;
-    if (file.tag.album) tags.album = file.tag.album;
-    if (file.tag.title) tags.title = file.tag.title;
+    const tags = columns ? extractRequestedTagFields(file.tag, columns) : extractDefaultTagFields(file.tag);
     const duration = file.properties.durationMilliseconds || null;
     return { tags, duration };
   } finally {
