@@ -16,6 +16,7 @@
             electron
             nest-cli
             nodejs_26
+            sqlite
             typescript-language-server
           ];
         };
