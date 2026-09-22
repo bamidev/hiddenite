@@ -121,16 +121,26 @@ export async function extractYouTubeMetadata(url: string): Promise<ExtractedMeta
   return { tags, duration };
 }
 
+// ReplayGain fields use NaN as their "no value set" sentinel rather than the 0 that most other
+// numeric taglib fields use, but readTagValue's NaN-safe check below covers both cases.
+const REPLAY_GAIN_TAG_ALIASES: Record<string, string> = {
+  replaygain_track_gain: 'replayGainTrackGain',
+  replaygain_track_peak: 'replayGainTrackPeak',
+  replaygain_album_gain: 'replayGainAlbumGain',
+  replaygain_album_peak: 'replayGainAlbumPeak',
+};
+
 // Renames applied to a handful of taglib fields so they match the names used
 // elsewhere in the app (e.g. the "artist" tag predates this generic extraction).
 const TAG_FIELD_ALIASES: Record<string, string> = {
   artist: 'performers',
+  ...REPLAY_GAIN_TAG_ALIASES,
 };
 
 function readTagValue(tag: Record<string, unknown>, propertyName: string): string | null {
   const value = tag[propertyName];
   if (Array.isArray(value)) return value.length > 0 ? value.join('; ') : null;
-  if (typeof value === 'number') return value !== 0 ? String(value) : null;
+  if (typeof value === 'number') return !Number.isNaN(value) && value !== 0 ? String(value) : null;
   if (typeof value === 'string') return value || null;
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'boolean') return value ? 'true' : null;
@@ -155,6 +165,10 @@ function extractDefaultTagFields(tag: { firstPerformer: string, album: string, t
   if (tag.firstPerformer) tags.artist = tag.firstPerformer;
   if (tag.album) tags.album = tag.album;
   if (tag.title) tags.title = tag.title;
+  for (const [key, propertyName] of Object.entries(REPLAY_GAIN_TAG_ALIASES)) {
+    const text = readTagValue(tag as unknown as Record<string, unknown>, propertyName);
+    if (text) tags[key] = text;
+  }
   return tags;
 }
 

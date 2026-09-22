@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { APP_NAME } from 'hiddenite'
-import { openLibraryDatabase, rescanLibrary as scanLibrary, listLibrarySongs, addUrlSong as addLibraryUrlSong, removeLibrarySong, setSongTag, getLibrarySong, listColumns as listLibraryColumns, addColumn as addLibraryColumn, removeColumn as removeLibraryColumn } from 'hiddenite/library'
+import * as library from 'hiddenite/library'
 import { extractBandcampMetadata, extractYouTubeMetadata, extractFileMetadata } from 'hiddenite/playback-event'
 
 const xdgDataHome = process.env.XDG_DATA_HOME || path.join(app.getPath('home'), '.local', 'share')
@@ -19,7 +19,7 @@ mkdirSync(path.dirname(DB_PATH), { recursive: true })
 const MUSIC_DIR = path.join(os.homedir(), 'Music')
 
 export async function rescanLibrary(): Promise<number> {
-  return scanLibrary(DB_PATH, [MUSIC_DIR])
+  return library.rescanLibrary(DB_PATH, [MUSIC_DIR])
 }
 
 const WRITABLE_TAG_KEYS: Record<string, (tag: any, value: string) => void> = {
@@ -49,12 +49,12 @@ export async function addUrlSong(kind: string, url: string): Promise<void> {
     : kind === 'youtube' ? await extractYouTubeMetadata(url)
     : { tags: {}, duration: null }
 
-  addLibraryUrlSong(DB_PATH, kind, url, MUSIC_DIR, metadata)
+  library.addUrlSong(DB_PATH, kind, url, MUSIC_DIR, metadata)
 }
 
 export async function addFileSong(filePath: string): Promise<void> {
-  const { tags, duration } = await extractFileMetadata(filePath, listLibraryColumns(DB_PATH, MUSIC_DIR))
-  const db = openLibraryDatabase(DB_PATH)
+  const { tags, duration } = await extractFileMetadata(filePath, library.listExtractableTagKeys(DB_PATH, MUSIC_DIR))
+  const db = library.openLibraryDatabase(DB_PATH)
   const { lastInsertRowid: songId } = db
     .prepare('INSERT INTO song (path, kind, duration, folder) VALUES (?, ?, ?, ?)')
     .run(filePath, 'file', duration, MUSIC_DIR)
@@ -66,30 +66,30 @@ export async function addFileSong(filePath: string): Promise<void> {
 }
 
 export async function setTag(id: string, key: string, value: string): Promise<void> {
-  setSongTag(DB_PATH, id, key, value)
+  library.setSongTag(DB_PATH, id, key, value)
 
-  const song = getLibrarySong(DB_PATH, id)
+  const song = library.getLibrarySong(DB_PATH, id)
   if (song?.kind === 'file' && WRITABLE_TAG_KEYS[key]) {
     await writeTag(song.path, key, value)
   }
 }
 
 export function listSongs() {
-  return listLibrarySongs(DB_PATH, {})
+  return library.listLibrarySongs(DB_PATH, {})
 }
 
 export function removeSong(id: string): void {
-  removeLibrarySong(DB_PATH, id)
+  library.removeLibrarySong(DB_PATH, id)
 }
 
 export function listColumns(): string[] {
-  return listLibraryColumns(DB_PATH, MUSIC_DIR)
+  return library.listColumns(DB_PATH, MUSIC_DIR)
 }
 
 export function addColumn(key: string): void {
-  addLibraryColumn(DB_PATH, MUSIC_DIR, key)
+  library.addColumn(DB_PATH, MUSIC_DIR, key)
 }
 
 export function removeColumn(key: string): void {
-  removeLibraryColumn(DB_PATH, MUSIC_DIR, key)
+  library.removeColumn(DB_PATH, MUSIC_DIR, key)
 }

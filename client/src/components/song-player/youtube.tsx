@@ -15,7 +15,7 @@ function extractYouTubeVideoId(url: string): string | null {
   }
 }
 
-export default function YouTubePlayer({ url, elapsedMs, playing }: { url: string, elapsedMs: number, playing: boolean }) {
+export default function YouTubePlayer({ url, elapsedMs, playing, gain }: { url: string, elapsedMs: number, playing: boolean, gain: number }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const videoId = extractYouTubeVideoId(url)
 
@@ -25,6 +25,15 @@ export default function YouTubePlayer({ url, elapsedMs, playing }: { url: string
     const func = playing ? 'playVideo' : 'pauseVideo'
     contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*')
   }, [playing])
+
+  // The iframe API only exposes 0-100 volume, so a gain above 1 (boost) just clamps to full
+  // volume — it can't amplify past the source's native level like the default player's GainNode can.
+  useEffect(() => {
+    const contentWindow = iframeRef.current?.contentWindow
+    if (!contentWindow) return
+    const volume = Math.round(Math.max(0, Math.min(100, gain * 100)))
+    contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*')
+  }, [gain])
 
   if (!videoId) return null
 

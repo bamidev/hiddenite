@@ -72,6 +72,23 @@ export function listColumns(dbPath: string, folder: string): string[] {
   }
 }
 
+// Tag keys that are always extracted for a file, on top of whatever display columns are
+// configured, because they drive playback behavior rather than being shown in the table.
+const IMPLICIT_TAG_KEYS = ['replaygain_track_gain', 'replaygain_track_peak', 'replaygain_album_gain', 'replaygain_album_peak'];
+
+function extractableTagKeys(db: DatabaseSync, folder: string): string[] {
+  return [...new Set([...readColumns(db, folder), ...IMPLICIT_TAG_KEYS])];
+}
+
+export function listExtractableTagKeys(dbPath: string, folder: string): string[] {
+  const db = openLibraryDatabase(dbPath);
+  try {
+    return extractableTagKeys(db, folder);
+  } finally {
+    db.close();
+  }
+}
+
 export function addColumn(dbPath: string, folder: string, key: string): void {
   const db = openLibraryDatabase(dbPath);
   try {
@@ -124,11 +141,11 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
     for (const { folder, files } of filesByFolder) {
       deleteTags.run(folder);
       deleteSongs.run(folder);
-      const columns = readColumns(db, folder);
+      const tagKeys = extractableTagKeys(db, folder);
       for (const filePath of files) {
         let metadata: ExtractedMetadata;
         try {
-          metadata = await songMetadata.extractFileMetadata(filePath, columns);
+          metadata = await songMetadata.extractFileMetadata(filePath, tagKeys);
         } catch (err) {
           console.warn(`Skipping library file ${filePath}:`, err);
           continue;
@@ -136,7 +153,7 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
 
         const { tags, duration } = metadata;
         const { lastInsertRowid: songId } = insertSong.run(filePath, 'file', duration, folder);
-        for (const key of columns) {
+        for (const key of tagKeys) {
           insertTag.run(songId as number, key, tags[key] ?? null);
         }
         fileCount += 1;
@@ -187,7 +204,7 @@ export async function listLibrarySongs(dbPath: string, query: LibrarySongQuery =
     const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
     for (const song of songs) {
       if (song.kind !== 'file') continue;
-      if (!columnsByFolder.has(song.folder)) columnsByFolder.set(song.folder, readColumns(db, song.folder));
+      if (!columnsByFolder.has(song.folder)) columnsByFolder.set(song.folder, extractableTagKeys(db, song.folder));
 
       const knownTags = tagsBySongId.get(song.id) ?? new Map<string, string | null>();
       const missingKeys = columnsByFolder.get(song.folder)!.filter(key => !knownTags.has(key));
