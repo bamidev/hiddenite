@@ -1,7 +1,7 @@
 import type { SongInfo } from 'hiddenite'
-import DefaultPlayer from './default-player.tsx'
-import BandcampPlayer from './bandcamp-player.tsx'
-import YouTubePlayer from './youtube-player.tsx'
+import DefaultPlayer from './song-player/default.tsx'
+import BandcampPlayer from './song-player/bandcamp.tsx'
+import YouTubePlayer from './song-player/youtube.tsx'
 
 export default function SongPlayer({ currentSong, mixSourceId, elapsedMs, playing, cacheBuster }: { currentSong: SongInfo, mixSourceId: string, elapsedMs: number, playing: boolean, cacheBuster: number }) {
   if (currentSong.kind === 'bandcamp') {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { api } from '../api.ts'
-import { showToast } from '../error.ts'
+import { api } from '../../api.ts'
+import { showToast } from '../../error.ts'
 
 export default function DefaultPlayer({ mixSourceId, elapsedMs, playing, cacheBuster }: { mixSourceId: string, elapsedMs: number, playing: boolean, cacheBuster: number }) {
   const audioRef = useRef<HTMLAudioElement>(null)
