@@ -54,7 +54,8 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   }
 
   async function onRescan() {
-    await api.post('library/rescan')
+    if (!folder) return
+    await api.post('library/rescan', { folder: folder.path })
     window.dispatchEvent(new CustomEvent('remote-library-rescanned'))
   }
 

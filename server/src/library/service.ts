@@ -24,9 +24,11 @@ function uniqueFolderName(path: string, used: Set<string>): string {
 
 @Injectable()
 export class LibraryService {
-  rescan(): Promise<number> {
-    const paths = config.library.folders.map((folder) => folder.path);
-    return library.rescanLibrary(config.database.path, paths);
+  rescan(folder: string): Promise<number> {
+    if (!config.library.folders.some((f) => f.path === folder)) {
+      throw new BadRequestException(`Unknown library folder: ${folder}`);
+    }
+    return library.rescanLibrary(config.database.path, [folder]);
   }
 
   listFolders(): LibraryFolder[] {

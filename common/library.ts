@@ -114,14 +114,16 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
   })));
   const db = openLibraryDatabase(dbPath);
 
-  db.exec('DELETE FROM tag WHERE song_id IN (SELECT id FROM song WHERE added_by_scan = 1)');
-  db.exec('DELETE FROM song WHERE added_by_scan = 1');
+  const deleteTags = db.prepare('DELETE FROM tag WHERE song_id IN (SELECT id FROM song WHERE folder = ? AND added_by_scan = 1)');
+  const deleteSongs = db.prepare('DELETE FROM song WHERE folder = ? AND added_by_scan = 1');
   const insertSong = db.prepare('INSERT INTO song (path, kind, duration, folder, added_by_scan) VALUES (?, ?, ?, ?, 1)');
   const insertTag = db.prepare('INSERT INTO tag (song_id, key, value) VALUES (?, ?, ?)');
 
   let fileCount = 0;
   try {
     for (const { folder, files } of filesByFolder) {
+      deleteTags.run(folder);
+      deleteSongs.run(folder);
       const columns = readColumns(db, folder);
       for (const filePath of files) {
         let metadata: ExtractedMetadata;

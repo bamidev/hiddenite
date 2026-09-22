@@ -38,8 +38,8 @@ export class LibraryController {
   }
 
   @Post('rescan')
-  async rescan() {
-    const count = await this.service.rescan();
+  async rescan(@Body('folder') folder: string) {
+    const count = await this.service.rescan(folder);
     return { count };
   }
 
