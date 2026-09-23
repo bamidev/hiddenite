@@ -1,3 +1,9 @@
+/**
+ * A remote (server-hosted) library folder panel: lists songs from the server's song index
+ * belonging to a given folder, and lets the user queue, remove, rescan, tag-edit, and manage
+ * columns for them via the API.
+ */
+
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../../api.ts'
@@ -8,11 +14,28 @@ import SongTable, { type SongData } from '../song-table.tsx'
 import { showToast } from '../../error.ts'
 import type { LibraryFolder } from '../consolidated-library.tsx'
 
+/**
+ * A song from the server's remote library index, as returned by the `library/song` endpoint.
+ */
 interface RemoteSongData extends SongData {
+  /** Server-side path/URL identifying the song. */
   path: string
+  /** Path of the folder this song belongs to; matched against `folder.path` to filter the view. */
   folder: string
 }
 
+/**
+ * Renders a remote library folder's song table. Loads all remote songs (client-side filtered
+ * down to the given `folder`) and that folder's tag columns on mount, refreshing songs whenever
+ * a `remote-library-rescanned` event fires. When `folder` is omitted, all songs across every
+ * remote folder are shown and folder-specific actions (rescan, add song, column management) are
+ * disabled.
+ *
+ * @param activeQueueIdRef - Ref to the id of the currently active queue; songs are queued to
+ *   this queue when "add" is clicked, and a toast is shown if no queue is active.
+ * @param folder - The remote folder to show songs for. When omitted, shows the consolidated
+ *   view across all folders with folder-scoped actions disabled.
+ */
 export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   activeQueueIdRef: RefObject<string | null>
   folder?: LibraryFolder
@@ -21,10 +44,16 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   const [columns, setColumns] = useState<string[]>([])
   const visibleSongs = folder ? songs.filter(song => song.folder === folder.path) : songs
 
+  /**
+   * Refreshes `songs` from the server's remote library song index.
+   */
   function loadSongs() {
     api.get('library/song').then(response => response.json()).then(setSongs)
   }
 
+  /**
+   * Refreshes `columns` from the server for the current `folder`. No-op when there is no folder.
+   */
   function loadColumns() {
     if (!folder) return
     api.get(`library/column?folder=${encodeURIComponent(folder.path)}`).then(response => response.json()).then(setColumns)
@@ -37,6 +66,12 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     return () => window.removeEventListener('remote-library-rescanned', loadSongs)
   }, [])
 
+  /**
+   * Adds `song` to the currently active queue via the API. Shows a toast and bails out if there
+   * is no active queue.
+   *
+   * @param song - The library song to queue.
+   */
   async function onQueueSong(song: SongData) {
     const queueId = activeQueueIdRef.current
     if (!queueId) {
@@ -48,22 +83,45 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     window.dispatchEvent(new CustomEvent('queue-song-added', { detail: { queueId } }))
   }
 
+  /**
+   * Removes `song` from the remote library via the API and refreshes the song list.
+   *
+   * @param song - The library song to remove.
+   */
   async function onRemoveSong(song: SongData) {
     await api.delete(`library/song/${song.id}`)
     loadSongs()
   }
 
+  /**
+   * Requests a rescan of the current `folder` on the server, then broadcasts a
+   * `remote-library-rescanned` event so all `RemoteLibrary` instances refresh. No-op when there
+   * is no folder.
+   */
   async function onRescan() {
     if (!folder) return
     await api.post('library/rescan', { folder: folder.path })
     window.dispatchEvent(new CustomEvent('remote-library-rescanned'))
   }
 
+  /**
+   * Updates a single tag value on `song` via the API and refreshes the song list.
+   *
+   * @param song - The library song being edited.
+   * @param key - The tag name to set.
+   * @param value - The new tag value.
+   */
   async function onEditTag(song: RemoteSongData, key: string, value: string) {
     await api.put(`library/song/${song.id}/tag`, { key, value })
     loadSongs()
   }
 
+  /**
+   * Adds a new tag column for the current `folder` via the API and refreshes columns and songs.
+   * No-op when there is no folder.
+   *
+   * @param key - The tag name to add as a column.
+   */
   async function onAddColumn(key: string) {
     if (!folder) return
     await api.put('library/column', { folder: folder.path, key })
@@ -71,6 +129,12 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
     loadSongs()
   }
 
+  /**
+   * Removes a tag column for the current `folder` via the API and refreshes the column list.
+   * No-op when there is no folder.
+   *
+   * @param key - The tag name to remove as a column.
+   */
   async function onRemoveColumn(key: string) {
     if (!folder) return
     await api.delete('library/column', { folder: folder.path, key })

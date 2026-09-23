@@ -1,10 +1,26 @@
+/**
+ * A small "⋯" trigger button that opens a dropdown list of actions, closing itself when the
+ * user clicks outside of it.
+ */
+
 import { useEffect, useRef, useState } from 'react'
 
+/**
+ * A single entry in an {@link ActionMenu}'s dropdown list.
+ */
 export interface ActionMenuAction {
+  /** Text shown for this menu entry. */
   label: string
+  /** Called when the entry is clicked; the menu closes automatically beforehand. */
   onClick: () => void
 }
 
+/**
+ * Renders a "⋯" button that toggles a dropdown of clickable actions. The dropdown closes
+ * automatically when the user clicks anywhere outside the menu.
+ *
+ * @param actions - The list of actions to show in the dropdown, in order.
+ */
 export default function ActionMenu({ actions }: { actions: ActionMenuAction[] }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

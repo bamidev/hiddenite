@@ -1,5 +1,17 @@
+/**
+ * Embeds a YouTube video as the song player, controlling playback and volume through the
+ * YouTube IFrame API's postMessage protocol.
+ */
+
 import { useEffect, useRef } from 'react'
 
+/**
+ * Extracts the YouTube video id from a URL, supporting youtu.be short links, `?v=` query
+ * parameters, and `/embed/`/`/shorts/` path forms.
+ *
+ * @param url - The YouTube URL to parse. May be malformed, in which case `null` is returned.
+ * @returns The extracted video id, or `null` if it couldn't be determined.
+ */
 function extractYouTubeVideoId(url: string): string | null {
   try {
     const parsed = new URL(url)
@@ -15,6 +27,18 @@ function extractYouTubeVideoId(url: string): string | null {
   }
 }
 
+/**
+ * Renders a YouTube video embed configured for use as an audio player (autoplaying, no visible
+ * controls, starting at `elapsedMs`), and drives play/pause and volume through the IFrame API by
+ * posting messages into the embed's `contentWindow`. Renders nothing if the video id can't be
+ * extracted from `url`.
+ *
+ * @param url - The YouTube video URL to embed.
+ * @param elapsedMs - Milliseconds to start playback at (only applied once, via the initial embed URL).
+ * @param playing - Whether the video should be playing; toggled via `playVideo`/`pauseVideo` commands.
+ * @param gain - Linear volume multiplier; converted to the IFrame API's 0-100 volume scale and
+ *   clamped, so values above 1 can't boost volume past 100 (unlike the default player's GainNode).
+ */
 export default function YouTubePlayer({ url, elapsedMs, playing, gain }: { url: string, elapsedMs: number, playing: boolean, gain: number }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const videoId = extractYouTubeVideoId(url)

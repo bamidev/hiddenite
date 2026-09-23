@@ -1,3 +1,10 @@
+/**
+ * Placeholder player component. Currently renders only static text.
+ */
+
+/**
+ * Renders the (currently placeholder) player.
+ */
 export default function Player() {
   return (
     <>

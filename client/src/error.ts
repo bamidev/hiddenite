@@ -1,5 +1,14 @@
+/**
+ * Manages Bootstrap toast notifications: builds toast DOM elements, tracks them by id so they
+ * can be shown on demand, and registers the app's well-known toasts (e.g. "no active queue",
+ * "autoplay blocked").
+ */
+
 import { Toast } from 'bootstrap'
 
+/**
+ * Severity level of a toast message, used to pick its Bootstrap background class.
+ */
 export type MessageType = 'error' | 'warning' | 'info'
 
 const LEVEL_CLASSES: Record<MessageType, string> = {
@@ -10,6 +19,10 @@ const LEVEL_CLASSES: Record<MessageType, string> = {
 
 const toasts = new Map<string, Toast>()
 
+/**
+ * Returns the shared fixed-position container element that toasts are appended to, creating
+ * and inserting it into the document body the first time it's needed.
+ */
 function getContainer(): HTMLElement {
   let container = document.getElementById('toast-container')
   if (!container) {
@@ -22,7 +35,12 @@ function getContainer(): HTMLElement {
 }
 
 /**
- * Creates a toast element and puts it on the page, without showing it yet.
+ * Creates a toast element and puts it on the page, without showing it yet. Replaces any
+ * existing element with the same id.
+ *
+ * @param id - Unique id for the toast, used later to show it via {@link showToast}.
+ * @param level - Severity level, which determines the toast's background color.
+ * @param message - The text to display inside the toast body.
  */
 export function loadToast(id: string, level: MessageType, message: string): void {
   document.getElementById(id)?.remove()
@@ -55,7 +73,10 @@ export function loadToast(id: string, level: MessageType, message: string): void
 }
 
 /**
- * Shows a toast that was previously put on the page with loadToast.
+ * Shows a toast that was previously put on the page with loadToast. Does nothing if no toast
+ * with the given id has been loaded.
+ *
+ * @param id - The id of the toast to show, as passed to {@link loadToast}.
  */
 export function showToast(id: string): void {
   toasts.get(id)?.show()

@@ -1,14 +1,32 @@
+/**
+ * Combines the local (Electron-scanned) library and any number of remote server library
+ * folders into a single tabbed view.
+ */
+
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import { api } from '../api.ts'
 import RemoteLibrary from './library/remote.tsx'
 import LocalLibrary from './library/local.tsx'
 
+/**
+ * A remote library folder exposed by the server, as returned by the `library/folder` endpoint.
+ */
 export interface LibraryFolder {
+  /** Display name of the folder, used for the tab label and as a UI key. */
   name: string
+  /** Server-side path identifying the folder, used when referring to it in API calls. */
   path: string
 }
 
+/**
+ * Renders a tab strip with one tab per library: the local Electron-scanned library (only shown
+ * when running inside Electron) plus one tab per remote server folder. Loads the list of remote
+ * folders on mount and renders a `LocalLibrary` or `RemoteLibrary` panel per tab.
+ *
+ * @param activeQueueIdRef - Ref to the id of the currently active queue, forwarded to the
+ *   library panels so "add to queue" actions know which queue to target.
+ */
 export default function ConsolidatedLibrary({ activeQueueIdRef }: { activeQueueIdRef: RefObject<string | null> }) {
   const [folders, setFolders] = useState<LibraryFolder[]>([])
 

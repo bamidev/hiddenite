@@ -1,5 +1,12 @@
+/**
+ * The top navigation bar showing the app's name.
+ */
+
 import { APP_NAME_CAPITALIZED } from 'hiddenite'
 
+/**
+ * Renders the top navigation bar with the app's display name.
+ */
 export default function NavBar() {
   return (
     <nav className="navbar navbar-expand bg-body-tertiary">

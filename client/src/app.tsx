@@ -1,3 +1,10 @@
+/**
+ * The root application component: lays out the nav bar, main bar, the list of mix sources
+ * (playback state machines with their queues), and the collapsible library section, and owns
+ * the top-level state (loaded mix sources, library folders, and which queue is "active" for
+ * queuing new songs) shared across those areas.
+ */
+
 import { useEffect, useRef, useState } from 'react'
 import { api } from './api.ts'
 import MainBar from './components/main-bar.tsx'
@@ -9,6 +16,11 @@ import ConsolidatedLibrary, { type LibraryFolder } from './components/consolidat
 import CollapsibleSection from './components/common/collapsible-section.tsx'
 
 
+/**
+ * Root component of the app. Loads the list of mix sources and library folders on mount,
+ * tracks which queue is currently "active" (the target for songs added from the library),
+ * and renders the nav bar, main bar, mix sources, and the library accordion section.
+ */
 function App() {
   const [sources, setSources] = useState<MixSourceData[]>([]);
   const [libraryFolders, setLibraryFolders] = useState<LibraryFolder[]>([]);
@@ -31,12 +43,21 @@ function App() {
     api.get('library/folder').then(response => response.json()).then(setLibraryFolders)
   }, [])
 
+  /**
+   * Creates a new mix source on the server and appends it to local state.
+   */
   async function onAddMixSource() {
     const response = await api.put('mix-source')
     const source: MixSourceData = await response.json()
     setSources(s => [...s, source])
   }
 
+  /**
+   * Creates a new queue on the given mix source and appends it to that source's queue list.
+   * If no queue is currently active, the new queue becomes the active one.
+   *
+   * @param mixSourceId - The id of the mix source to add the queue to.
+   */
   async function onAddQueue(mixSourceId: string) {
     const response = await api.put(`mix-source/${mixSourceId}/queue`)
     const queue: QueueData = await response.json()
@@ -51,6 +72,12 @@ function App() {
       activeQueueIdRef.current = queue.id
   }
 
+  /**
+   * Renames a mix source on the server and updates local state to match.
+   *
+   * @param mixSourceId - The id of the mix source to rename.
+   * @param name - The new name for the mix source.
+   */
   async function onRenameMixSource(mixSourceId: string, name: string) {
     await api.put(`mix-source/${mixSourceId}/name`, { name })
     setSources(s => s.map(source =>
@@ -58,6 +85,13 @@ function App() {
     ))
   }
 
+  /**
+   * Renames a queue on the server and updates local state to match.
+   *
+   * @param mixSourceId - The id of the mix source that owns the queue.
+   * @param queueId - The id of the queue to rename.
+   * @param name - The new name for the queue.
+   */
   async function onRenameQueue(mixSourceId: string, queueId: string, name: string) {
     await api.put(`queue/${queueId}/name`, { name })
     setSources(s => s.map(source =>

@@ -1,5 +1,13 @@
 /**
- * Whenever an API call failed.
+ * Thin wrapper around `fetch` for talking to the Hiddenite server: builds request URLs
+ * relative to a base URL, serializes JSON/FormData bodies, and throws on non-OK responses.
+ * Also exports a shared `api` singleton pointed at the correct base URL for the current
+ * environment (Vite dev server vs. production).
+ */
+
+/**
+ * Thrown by {@link Api} methods whenever the underlying `fetch` call resolves with a
+ * non-OK response status.
  */
 class ApiCallError extends Error {
   response: Response;
@@ -10,6 +18,10 @@ class ApiCallError extends Error {
   }
 }
 
+/**
+ * A small HTTP client for the Hiddenite server API. Wraps `fetch` with a configurable
+ * base URL, automatic JSON/FormData body encoding, and error throwing on failed requests.
+ */
 export default class Api {
   baseUrl: string;
 
@@ -21,7 +33,15 @@ export default class Api {
   }
 
   /**
-   * Perform the HTTP request with the given method.
+   * Perform the HTTP request with the given method. Serializes `body` as JSON unless it is
+   * already a `FormData` instance, in which case it is sent as-is (letting the browser set
+   * the multipart content type).
+   *
+   * @param method - The HTTP method to use (e.g. 'GET', 'PUT', 'POST', 'DELETE').
+   * @param path - The path to request, relative to `baseUrl`.
+   * @param body - Optional request body. Plain values are JSON-encoded; `FormData` is sent unmodified.
+   * @returns The resolved `Response`.
+   * @throws {ApiCallError} If the response status indicates failure.
    */
   async _fetch(method: string, path: string, body?: unknown) {
     const isFormData = body instanceof FormData;
@@ -38,12 +58,10 @@ export default class Api {
   }
 
   /**
-   *
    * Perform a GET request.
    *
-   * @param objectName - The object name
-   * @param subPath - A subpath
-   * @returns A promise
+   * @param path - The path to request, relative to `baseUrl`. Defaults to the base URL itself.
+   * @returns A promise resolving to the `Response`.
    */
   get(path: string = '') {
     return this._fetch('GET', path);
@@ -52,9 +70,9 @@ export default class Api {
   /**
    * Perform a PUT request.
    *
-   * @param objectName - [TODO:description]
-   * @param subPath - [TODO:description]
-   * @returns [TODO:return]
+   * @param path - The path to request, relative to `baseUrl`. Defaults to the base URL itself.
+   * @param body - Optional request body, JSON-encoded unless it is `FormData`.
+   * @returns A promise resolving to the `Response`.
    */
   put(path: string = '', body?: unknown) {
     return this._fetch('PUT', path, body);
@@ -62,6 +80,10 @@ export default class Api {
 
   /**
    * Perform a POST request.
+   *
+   * @param path - The path to request, relative to `baseUrl`. Defaults to the base URL itself.
+   * @param body - Optional request body, JSON-encoded unless it is `FormData`.
+   * @returns A promise resolving to the `Response`.
    */
   post(path: string = '', body?: unknown) {
     return this._fetch('POST', path, body);
@@ -69,6 +91,10 @@ export default class Api {
 
   /**
    * Perform a DELETE request.
+   *
+   * @param path - The path to request, relative to `baseUrl`. Defaults to the base URL itself.
+   * @param body - Optional request body, JSON-encoded unless it is `FormData`.
+   * @returns A promise resolving to the `Response`.
    */
   delete(path: string = '', body?: unknown) {
     return this._fetch('DELETE', path, body);

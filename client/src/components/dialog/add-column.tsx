@@ -1,3 +1,8 @@
+/**
+ * A "+" button that opens a Bootstrap modal for adding a new tag column to a song table, either
+ * picking from a list of common tag names or entering a custom one.
+ */
+
 import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Modal } from 'bootstrap'
@@ -5,6 +10,15 @@ import { Modal } from 'bootstrap'
 const COMMON_TAG_NAMES = ['artist', 'album', 'title', 'rating', 'genre', 'year', 'composer', 'comment', 'bpm', 'track']
 const CUSTOM_OPTION = '__custom__'
 
+/**
+ * Renders a "+" trigger button and (via a portal into `document.body`) a Bootstrap modal for
+ * choosing a new tag column name. Validates that the name is non-empty and not already present
+ * in `existingColumns` before calling `onAdd` and closing the modal.
+ *
+ * @param id - DOM id for the modal, used to wire up the trigger button's `data-bs-target`.
+ * @param existingColumns - Column names already present in the table, used to reject duplicates.
+ * @param onAdd - Called with the trimmed, validated column name when the user submits.
+ */
 export default function AddColumnDialog({ id, existingColumns, onAdd }: {
   id: string
   existingColumns: string[]
@@ -15,12 +29,19 @@ export default function AddColumnDialog({ id, existingColumns, onAdd }: {
   const [custom, setCustom] = useState('')
   const [error, setError] = useState('')
 
+  /**
+   * Hides the modal via the Bootstrap `Modal` instance attached to `modalRef`.
+   */
   function closeModal() {
     if (modalRef.current) {
       Modal.getInstance(modalRef.current)?.hide()
     }
   }
 
+  /**
+   * Validates the selected/custom column name and, if valid, calls `onAdd` with it, resets the
+   * form, and closes the modal.
+   */
   function onSubmit() {
     const name = (selected === CUSTOM_OPTION ? custom : selected).trim()
     if (!name) {

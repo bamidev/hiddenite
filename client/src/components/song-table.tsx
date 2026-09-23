@@ -1,12 +1,24 @@
+/**
+ * A generic, reusable song listing table: search, pagination, configurable/editable tag
+ * columns (with add/remove column dialogs), a duration column, and per-row action buttons.
+ * Used by the local library, remote library, and queue views.
+ */
+
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import AddSongDialog from './dialog/add-song.tsx'
 import AddColumnDialog from './dialog/add-column.tsx'
 import type { SongKind } from '../song-kind.ts'
 
+/**
+ * The minimum shape a song must have to be rendered in a `SongTable`. Callers typically extend
+ * this with extra fields (e.g. `path`, `folder`).
+ */
 export interface SongData {
   id: string
+  /** Tag key/value pairs, used both for column display and for search matching. */
   tags: Record<string, string>
+  /** Duration in milliseconds. `undefined`/`null` renders as a blank duration cell. */
   duration?: number | null
 }
 
@@ -16,6 +28,12 @@ const PAGE_SIZE = 10000
 const SIBLING_COUNT = 1
 const SEARCH_THRESHOLD = 20
 
+/**
+ * Formats a millisecond duration as `minutes:seconds` (e.g. `3:07`), or an empty string if unknown.
+ *
+ * @param duration - Duration in milliseconds, or `null`/`undefined` if unknown.
+ * @returns The formatted `m:ss` string, or `''` when `duration` is `null`/`undefined`.
+ */
 function formatDuration(duration: number | null | undefined): string {
   if (duration == null) return ''
   const totalSeconds = Math.round(duration / 1000)
@@ -24,6 +42,13 @@ function formatDuration(duration: number | null | undefined): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
+/**
+ * A table cell showing a tag value that turns into a text input for editing on double-click,
+ * committing the change (calling `onSave`) on blur only if the value actually changed.
+ *
+ * @param value - The current tag value to display, and to prefill the input with when editing.
+ * @param onSave - Called with the new value when editing ends with a change.
+ */
 function EditableTagCell({ value, onSave }: { value: string, onSave: (value: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
@@ -34,6 +59,9 @@ function EditableTagCell({ value, onSave }: { value: string, onSave: (value: str
     )
   }
 
+  /**
+   * Exits edit mode and, if the draft value differs from the original, calls `onSave` with it.
+   */
   function commit() {
     setEditing(false)
     if (draft !== value) onSave(draft)
@@ -57,6 +85,13 @@ function EditableTagCell({ value, onSave }: { value: string, onSave: (value: str
   )
 }
 
+/**
+ * A column header label that reveals a "Delete" action on double-click, closing the menu when
+ * clicking outside of it. Used for columns that support removal.
+ *
+ * @param label - The column's display name.
+ * @param onDelete - Called when the "Delete" action is clicked.
+ */
 function ColumnHeaderMenu({ label, onDelete }: { label: string, onDelete: () => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -92,6 +127,15 @@ function ColumnHeaderMenu({ label, onDelete }: { label: string, onDelete: () => 
   )
 }
 
+/**
+ * Computes the list of page numbers (and 'ellipsis' gap markers) to show in the pagination
+ * control: always the first and last page, plus `SIBLING_COUNT` pages around the current one.
+ *
+ * @param current - Zero-based index of the current page.
+ * @param total - Total number of pages.
+ * @returns An ordered list of zero-based page indices interspersed with `'ellipsis'` markers
+ *   wherever a gap is skipped.
+ */
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   const keep = new Set<number>()
   keep.add(0)
@@ -111,6 +155,31 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
   return pages
 }
 
+/**
+ * Renders a searchable, paginated table of songs with configurable tag columns, an optional
+ * "add song" dialog, optional inline tag editing, and optional column add/remove controls. Which
+ * optional features are shown is entirely driven by which optional props are supplied (e.g.
+ * omitting `onAddUrl` hides the add-song dialog; omitting `onAddColumn` hides the add-column
+ * button).
+ *
+ * @param songs - The full (unfiltered, unpaginated) list of songs to display.
+ * @param renderActions - Renders the per-row action buttons (e.g. add/remove) for a song. When
+ *   omitted, no actions column is rendered.
+ * @param addDialogId - DOM id for the "add song" modal. Required (together with `onAddUrl`) for
+ *   the add-song dialog to render.
+ * @param onAddFile - Called when a song is added via local file upload. Passed through to
+ *   `AddSongDialog`; when omitted, that dialog's file-upload section is hidden.
+ * @param onAddUrl - Called when a song is added via URL. Required for the add-song dialog to render.
+ * @param onAdded - Called after a song has been successfully added. Defaults to a no-op when omitted.
+ * @param onEditTag - Called with a song, tag key, and new value when a tag cell is edited. When
+ *   omitted, tag cells render as plain (non-editable) text.
+ * @param columns - The tag columns to display, in order. Defaults to `DEFAULT_TAG_COLUMNS` when
+ *   omitted (used by callers that don't manage a persisted column list, e.g. the queue table).
+ * @param onAddColumn - Called with a new tag name when a column is added. When omitted, the
+ *   add-column control is hidden.
+ * @param onRemoveColumn - Called with a tag name when a column is removed. When omitted, columns
+ *   render without a delete option.
+ */
 export default function SongTable<T extends SongData>({
   songs,
   renderActions,
