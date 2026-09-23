@@ -3,7 +3,9 @@
  * tags/columns, and rescanning folders on disk. Delegates all actual work
  * to `LibraryService`.
  */
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, type MessageEvent, Param, Post, Put, Query, Sse } from '@nestjs/common';
+import { map, type Observable } from 'rxjs';
+import type { LibraryRescanEvent } from 'hiddenite';
 import { LibraryService } from './service';
 
 const URL_SONG_KINDS = new Set(['bandcamp', 'youtube']);
@@ -74,14 +76,25 @@ export class LibraryController {
   }
 
   /**
-   * Rescans a library folder on disk, picking up added/removed/changed files.
+   * Starts a rescan of a library folder on disk in the background, picking up
+   * added/removed/changed files. Completion is announced over {@link events}.
    * @param folder path of the library folder to rescan.
-   * @returns the number of songs found in the folder after rescanning.
+   * @returns whether a new rescan was started, or one for this folder was already running.
    */
   @Post('rescan')
-  async rescan(@Body('folder') folder: string) {
-    const count = await this.service.rescan(folder);
-    return { count };
+  rescan(@Body('folder') folder: string) {
+    return this.service.rescan(folder);
+  }
+
+  /**
+   * Subscribes to rescan completion/failure events as a server-sent-events stream.
+   * @returns an observable of SSE message events, each wrapping a `LibraryRescanEvent`.
+   */
+  @Sse('events')
+  events(): Observable<MessageEvent> {
+    return this.service.getRescanEvents().pipe(
+      map((event: LibraryRescanEvent) => ({ data: event })),
+    );
   }
 
   /**

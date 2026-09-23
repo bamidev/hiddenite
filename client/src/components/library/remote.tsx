@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
+import type { LibraryRescanEvent } from 'hiddenite'
 import { api } from '../../api.ts'
 import AddButton from '../common/add-button.tsx'
 import RemoveButton from '../common/remove-button.tsx'
@@ -27,9 +28,9 @@ interface RemoteSongData extends SongData {
 /**
  * Renders a remote library folder's song table. Loads all remote songs (client-side filtered
  * down to the given `folder`) and that folder's tag columns on mount, refreshing songs whenever
- * a `remote-library-rescanned` event fires. When `folder` is omitted, all songs across every
- * remote folder are shown and folder-specific actions (rescan, add song, column management) are
- * disabled.
+ * a rescan (triggered by this or any other client) completes, via the `library/events` SSE
+ * stream. When `folder` is omitted, all songs across every remote folder are shown and
+ * folder-specific actions (rescan, add song, column management) are disabled.
  *
  * @param activeQueueIdRef - Ref to the id of the currently active queue; songs are queued to
  *   this queue when "add" is clicked, and a toast is shown if no queue is active.
@@ -42,6 +43,7 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
 }) {
   const [songs, setSongs] = useState<RemoteSongData[]>([])
   const [columns, setColumns] = useState<string[]>([])
+  const [rescanning, setRescanning] = useState(false)
   const visibleSongs = folder ? songs.filter(song => song.folder === folder.path) : songs
 
   /**
@@ -62,8 +64,15 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   useEffect(() => {
     loadSongs()
     loadColumns()
-    window.addEventListener('remote-library-rescanned', loadSongs)
-    return () => window.removeEventListener('remote-library-rescanned', loadSongs)
+
+    const eventSource = new EventSource(`${api.baseUrl}/library/events`)
+    eventSource.onmessage = e => {
+      const event: LibraryRescanEvent = JSON.parse(e.data)
+      if (event.folder === folder?.path) setRescanning(false)
+      if (event.status === 'failed') showToast('library-rescan-failed')
+      loadSongs()
+    }
+    return () => eventSource.close()
   }, [])
 
   /**
@@ -94,14 +103,19 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   }
 
   /**
-   * Requests a rescan of the current `folder` on the server, then broadcasts a
-   * `remote-library-rescanned` event so all `RemoteLibrary` instances refresh. No-op when there
-   * is no folder.
+   * Requests a rescan of the current `folder` on the server, showing a loading indicator until
+   * it completes or fails. The rescan runs in the background; all `RemoteLibrary` instances
+   * refresh once it completes, via the `library/events` SSE stream. No-op when there is no folder.
    */
   async function onRescan() {
     if (!folder) return
-    await api.post('library/rescan', { folder: folder.path })
-    window.dispatchEvent(new CustomEvent('remote-library-rescanned'))
+    setRescanning(true)
+    try {
+      await api.post('library/rescan', { folder: folder.path })
+    } catch (err) {
+      setRescanning(false)
+      throw err
+    }
   }
 
   /**
@@ -144,6 +158,9 @@ export default function RemoteLibrary({ activeQueueIdRef, folder }: {
   return (
     <div className="library">
       <ActionMenu actions={[{ label: 'Rescan', onClick: onRescan }]} />
+      {rescanning && (
+        <span className="spinner-border spinner-border-sm ms-2" role="status" aria-label="Rescanning…" />
+      )}
       <SongTable
         songs={visibleSongs}
         renderActions={song => (

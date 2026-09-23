@@ -238,6 +238,10 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
       deleteSongs.run(folder);
       const tagKeys = extractableTagKeys(db, folder);
       for (const filePath of files) {
+        // Extracting tags and writing to sqlite are both synchronous, so yield back to the
+        // event loop between files to avoid starving other requests during a large scan.
+        await new Promise(resolve => setImmediate(resolve));
+
         let metadata: ExtractedMetadata;
         try {
           metadata = await songMetadata.extractFileMetadata(filePath, tagKeys);

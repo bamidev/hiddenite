@@ -7,9 +7,12 @@
  */
 import { basename } from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Subject } from 'rxjs';
+import type { Observable } from 'rxjs';
 import * as library from 'hiddenite/library';
 import type { LibrarySong } from 'hiddenite/library';
 import { extractBandcampMetadata, extractYouTubeMetadata } from 'hiddenite/playback-event';
+import type { LibraryRescanEvent } from 'hiddenite';
 import { config } from '../config';
 
 /** A library folder as exposed to clients, with a display name derived from its path. */
@@ -46,16 +49,43 @@ function uniqueFolderName(path: string, used: Set<string>): string {
  */
 @Injectable()
 export class LibraryService {
+  /** Folders currently being rescanned in the background, so a folder is never rescanned twice at once. */
+  private readonly rescanningFolders = new Set<string>();
+  /** Stream of rescan completion/failure events, published once a background rescan finishes. */
+  private readonly rescanEvents = new Subject<LibraryRescanEvent>();
+
   /**
-   * Rescans a library folder on disk and updates the database accordingly.
+   * Starts a rescan of a library folder on disk in the background and returns immediately.
    * @param folder path of the folder to rescan; must be one of the configured library folders.
-   * @returns the number of songs found in the folder after rescanning.
+   * @returns whether a new rescan was started, or one for this folder was already running.
    */
-  rescan(folder: string): Promise<number> {
+  rescan(folder: string): { started: boolean } {
     if (!config.library.folders.some((f) => f.path === folder)) {
       throw new BadRequestException(`Unknown library folder: ${folder}`);
     }
-    return library.rescanLibrary(config.database.path, [folder]);
+    if (this.rescanningFolders.has(folder)) {
+      return { started: false };
+    }
+
+    this.rescanningFolders.add(folder);
+    library.rescanLibrary(config.database.path, [folder])
+      .then((count) => this.rescanEvents.next({ folder, status: 'complete', count }))
+      .catch((err: unknown) => {
+        console.error(`Rescan failed for folder ${folder}:`, err);
+        this.rescanEvents.next({ folder, status: 'failed', error: err instanceof Error ? err.message : String(err) });
+      })
+      .finally(() => this.rescanningFolders.delete(folder));
+
+    return { started: true };
+  }
+
+  /**
+   * Gets the stream of rescan completion/failure events, so clients can be notified over SSE
+   * once a background rescan (started via {@link rescan}) finishes.
+   * @returns an observable emitting a {@link LibraryRescanEvent} whenever a rescan finishes.
+   */
+  getRescanEvents(): Observable<LibraryRescanEvent> {
+    return this.rescanEvents.asObservable();
   }
 
   /**
