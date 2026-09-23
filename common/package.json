@@ -23,6 +23,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "liqe": "^3.8.7",
     "node-taglib-sharp": "^5.2.0"
   },
   "devDependencies": {

@@ -7,7 +7,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import liqe from 'liqe';
 import * as songMetadata from './song-metadata.js';
+import { hasLiqeOperators } from './song.js';
 import type { ExtractedMetadata } from './playback-event.js';
 
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac']);
@@ -265,7 +267,7 @@ export async function rescanLibrary(dbPath: string, rootDirs: string[]): Promise
 export interface LibrarySongQuery {
   /** Restrict results to songs in this folder; when omitted, songs from all folders are returned. */
   folder?: string;
-  /** Case-insensitive substring to match against any of a song's tag values. */
+  /** Case-insensitive substring to match against any of a song's tag values, or a Liqe query (see {@link hasLiqeOperators}). */
   filter?: string;
 }
 
@@ -283,13 +285,15 @@ export interface LibrarySongQuery {
 export async function listLibrarySongs(dbPath: string, query: LibrarySongQuery = {}): Promise<LibrarySong[]> {
   const db = openLibraryDatabase(dbPath);
   try {
+    const useLiqe = query.filter !== undefined && hasLiqeOperators(query.filter);
+
     const conditions: string[] = [];
     const params: string[] = [];
     if (query.folder !== undefined) {
       conditions.push('folder = ?');
       params.push(query.folder);
     }
-    if (query.filter) {
+    if (query.filter && !useLiqe) {
       conditions.push('EXISTS (SELECT 1 FROM tag WHERE tag.song_id = song.id AND LOWER(tag.value) LIKE ?)');
       params.push(`%${query.filter.toLowerCase()}%`);
     }
@@ -332,7 +336,7 @@ export async function listLibrarySongs(dbPath: string, query: LibrarySongQuery =
       }
     }
 
-    return songs.map(song => {
+    const results = songs.map(song => {
       const tags: Record<string, string> = {};
       for (const [key, value] of tagsBySongId.get(song.id) ?? []) {
         if (value != null) tags[key] = value;
@@ -346,6 +350,12 @@ export async function listLibrarySongs(dbPath: string, query: LibrarySongQuery =
         folder: song.folder,
       };
     });
+
+    if (useLiqe && query.filter) {
+      const ast = liqe.parse(query.filter);
+      return results.filter(song => liqe.test(ast, { ...song.tags, id: song.id, path: song.path, kind: song.kind, duration: song.duration, folder: song.folder }));
+    }
+    return results;
   } finally {
     db.close();
   }

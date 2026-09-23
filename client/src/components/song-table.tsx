@@ -6,6 +6,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import liqe from 'liqe'
+import { hasLiqeOperators } from 'hiddenite'
 import AddSongDialog from './dialog/add-song.tsx'
 import AddColumnDialog from './dialog/add-column.tsx'
 import type { SongKind } from '../song-kind.ts'
@@ -156,6 +158,34 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 }
 
 /**
+ * Filters songs by a search string: a Liqe query (see `hasLiqeOperators`) tested against each
+ * song's tags plus `id`/`duration`, or, when no Liqe operators are found, a plain case-insensitive
+ * substring match against any tag value. Falls back to the plain substring match if the string
+ * looks like a Liqe query but fails to parse (e.g. unbalanced quotes/parens while still typing).
+ *
+ * @param songs - Songs to filter.
+ * @param search - The search string as typed by the user.
+ * @returns The songs matching `search`.
+ */
+function filterSongs<T extends SongData>(songs: T[], search: string): T[] {
+  if (!search) return songs
+
+  if (hasLiqeOperators(search)) {
+    try {
+      const ast = liqe.parse(search)
+      return songs.filter(song => liqe.test(ast, { ...song.tags, id: song.id, duration: song.duration }))
+    } catch {
+      // Fall through to the plain substring match below, e.g. for a query that looks like it
+      // uses Liqe syntax but isn't valid yet (unbalanced quotes/parens while still typing).
+    }
+  }
+
+  return songs.filter(song =>
+    Object.values(song.tags).some(value => value.toLowerCase().includes(search.toLowerCase()))
+  )
+}
+
+/**
  * Renders a searchable, paginated table of songs with configurable tag columns, an optional
  * "add song" dialog, optional inline tag editing, and optional column add/remove controls. Which
  * optional features are shown is entirely driven by which optional props are supplied (e.g.
@@ -212,11 +242,7 @@ export default function SongTable<T extends SongData>({
     setPage(0)
   }, [search])
 
-  const filteredSongs = search
-    ? songs.filter(song =>
-        Object.values(song.tags).some(value => value.toLowerCase().includes(search.toLowerCase()))
-      )
-    : songs
+  const filteredSongs = filterSongs(songs, search)
 
   const pageCount = Math.max(1, Math.ceil(filteredSongs.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount - 1)

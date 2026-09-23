@@ -4,6 +4,7 @@
  */
 
 export type * from './playback-event.js';
+export { hasLiqeOperators } from './song.js';
 
 /** Canonical lowercase application name, e.g. used for paths and identifiers. */
 export const APP_NAME = 'hiddenite';
